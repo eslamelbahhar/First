@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Spark Cards — Full Game</title>
+  <meta name="color-scheme" content="light only" />
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Ensure smooth font rendering */
+    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-yellow-50 via-pink-50 to-purple-100 min-h-screen">
+  <div id="root"></div>
+
+  <!-- React + ReactDOM UMD (works without build tools) -->
+  <script src="https://unpkg.com/react@17/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@17/umd/react-dom.production.min.js" crossorigin></script>
+
+  <!-- Framer Motion UMD -->
+  <script src="https://unpkg.com/framer-motion/dist/framer-motion.umd.js"></script>
+
+  <!-- Babel Standalone to transpile JSX in the browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- App Code -->
+  <script type="text/babel">
+    const { useState } = React;
+    const { motion, AnimatePresence } = window.framerMotion;
+
+    // Utils
+    const rng = (n) => Math.floor(Math.random() * n);
+    const shuffle = (arr) => {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+
+    // Categories (styling pills)
+    const CATEGORY_STYLES = {
+      Warmup: "bg-sky-100 text-sky-900 border-sky-300",
+      Rapid: "bg-emerald-100 text-emerald-900 border-emerald-300",
+      Story: "bg-fuchsia-100 text-fuchsia-900 border-fuchsia-300",
+      Debate: "bg-amber-100 text-amber-900 border-amber-300",
+      Creative: "bg-indigo-100 text-indigo-900 border-indigo-300",
+      Wild: "bg-rose-100 text-rose-900 border-rose-300",
+    };
+
+    const CATEGORIES = [
+      { key: "Warmup", label: "Warm up" },
+      { key: "Rapid", label: "Rapid fire" },
+      { key: "Story", label: "Story time" },
+      { key: "Debate", label: "Debate" },
+      { key: "Creative", label: "Creative" },
+      { key: "Wild", label: "Wildcard" },
+    ];
+
+    // Expanded, regional & accessible prompt deck
+    const BASE_DECK = [
+      // Warmup
+      { c: "Warmup", t: "What is your favorite street food from your home country?" },
+      { c: "Warmup", t: "If you could visit any city in the Middle East or South Asia tomorrow, where would you go and why?" },
+      { c: "Warmup", t: "Share one traditional dish you miss the most when abroad." },
+      { c: "Warmup", t: "Tell us about a festival or holiday you love celebrating." },
+      { c: "Warmup", t: "What TV show or series is everyone talking about in your country now?" },
+      { c: "Warmup", t: "What phrase in your dialect always makes people laugh?" },
+
+      // Rapid
+      { c: "Rapid", t: "Name 3 famous football players from the region — go!" },
+      { c: "Rapid", t: "List 5 things you always buy at a local market or souq." },
+      { c: "Rapid", t: "Say 3 popular songs in Arabic, Hindi, or your native language that everyone knows." },
+      { c: "Rapid", t: "Name 3 cultural landmarks you’d recommend to a visitor." },
+      { c: "Rapid", t: "List 3 dishes your mom or grandma cooks the best." },
+      { c: "Rapid", t: "Name 3 popular mobile apps people use daily in your country." },
+
+      // Story
+      { c: "Story", t: "Tell a funny story from a family gathering or wedding." },
+      { c: "Story", t: "Share a childhood memory of playing a street or school game." },
+      { c: "Story", t: "Describe your most memorable Ramadan, Diwali, Eid, or Christmas moment." },
+      { c: "Story", t: "What’s the most surprising thing that happened while traveling locally?" },
+      { c: "Story", t: "Tell us about a time you got lost but discovered something amazing." },
+      { c: "Story", t: "What’s the funniest or strangest nickname you’ve ever had?" },
+
+      // Debate
+      { c: "Debate", t: "Tea vs Coffee — which is the real king of drinks?" },
+      { c: "Debate", t: "Should shawarma be eaten with fries inside or outside?" },
+      { c: "Debate", t: "Which is better: summer in Dubai or winter in Cairo?" },
+      { c: "Debate", t: "Which cuisine is unbeatable: Indian spices or Levantine mezze?" },
+      { c: "Debate", t: "Falafel vs Samosa — which snack wins?" },
+      { c: "Debate", t: "Football vs Cricket — which truly rules in our region?" },
+
+      // Creative
+      { c: "Creative", t: "Invent a new flavor of karak tea or juice mix." },
+      { c: "Creative", t: "Come up with a funny proverb in Arabic, Hindi, or your dialect." },
+      { c: "Creative", t: "Imagine a superhero inspired by your city and describe them." },
+      { c: "Creative", t: "Design a new festival — what’s the tradition?" },
+      { c: "Creative", t: "Mix two famous dishes from different countries — what do you get?" },
+      { c: "Creative", t: "Write a headline that would make everyone in your country smile." },
+
+      // Wild (kept seated & inclusive)
+      { c: "Wild", t: "If you were a dish, would you be biryani, koshari, or shawarma? Why?" },
+      { c: "Wild", t: "Pretend you are a football commentator narrating someone making tea." },
+      { c: "Wild", t: "Make up a new nickname for yourself using your favorite food or place." },
+      { c: "Wild", t: "Describe a camel race, Bollywood movie, or dabke dance in the most dramatic way." },
+      { c: "Wild", t: "Act like you are bargaining in a busy souq — what’s your best line?" },
+      { c: "Wild", t: "Invent a new celebration gesture for when your team scores a goal (describe it)." },
+    ];
+
+    // Category-aware twist engine
+    const GENERAL_TWISTS = [
+      "Keep it to 10 words max",
+      "End your answer with an emoji",
+      "Add one Arabic or Hindi word",
+      "Explain it like I am 5",
+      "Say it like a movie trailer voice-over",
+      "Speak with exaggerated excitement",
+      "Pretend you are convincing a friend at a café",
+      "Answer in a quick rhyme",
+    ];
+
+    const TWISTS_BY_CAT = {
+      Warmup: [
+        "Mention a local place (souq, street, or landmark)",
+        "Include a family-style tip (mom/dad/grandma advice)",
+        "Answer as if you’re giving advice to a friend",
+      ],
+      Rapid: [
+        "All items must start with the same letter",
+        "No using the word ‘and’",
+        "List items from small to big",
+      ],
+      Story: [
+        "Set it in your childhood city",
+        "Include one surprising but true detail",
+        "Finish with a short lesson learned",
+      ],
+      Debate: [
+        "Argue the side you DON’T believe",
+        "Give one reason and one example only",
+        "Make your case in two sentences",
+      ],
+      Creative: [
+        "Give it a name and a tagline",
+        "Add one ingredient/object from your culture",
+        "Describe it as a product ad",
+      ],
+      Wild: [
+        "Describe it without naming it",
+        "Use exactly one gesture (optional)",
+        "Explain it like you’re on a cooking show",
+      ],
+    };
+
+    const chooseTwist = (cat) => {
+      const pool = [...GENERAL_TWISTS, ...(TWISTS_BY_CAT[cat] || [])];
+      return pool[rng(pool.length)];
+    };
+
+    const NAMES = ["Eslam", "Heba", "Ibrahim", "Vindhya", "Salem", "Samiha", "Mahek"];
+
+    function TactileButton({ children, onClick }) {
+      return (
+        <motion.button
+          onClick={onClick}
+          whileTap={{ scale: 0.92, y: 2 }}
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 500, damping: 25 }}
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white text-lg font-semibold shadow-md hover:shadow-lg active:shadow-inner"
+        >
+          {children}
+        </motion.button>
+      );
+    }
+
+    function App() {
+      const [card, setCard] = useState(null);
+      const [twist, setTwist] = useState(null);
+      const [deck, setDeck] = useState(shuffle(BASE_DECK));
+      const [idx, setIdx] = useState(-1); // rotates players
+
+      const currentName = idx >= 0 ? NAMES[idx % NAMES.length] : null;
+
+      const drawCard = () => {
+        setIdx((prev) => (prev + 1) % NAMES.length);
+
+        let nextDeck = deck;
+        if (nextDeck.length === 0) nextDeck = shuffle(BASE_DECK);
+        const [top, ...rest] = nextDeck;
+        setCard(top);
+        setDeck(rest);
+
+        setTwist(chooseTwist(top.c));
+      };
+
+      return (
+        <div className="min-h-screen px-6 py-10 flex flex-col items-center justify-center text-xl">
+          <h1 className="text-5xl font-extrabold mb-6 drop-shadow-sm text-purple-700">🎲 Team Spark Cards</h1>
+          <div className="mb-6 text-3xl font-bold text-purple-800">
+            {currentName ? \`Current Player: \${currentName}\` : "Click New Card to start"}
+          </div>
+
+          <div className="rounded-3xl border-4 border-white/70 bg-white/90 shadow-2xl p-12 w-full max-w-4xl relative overflow-hidden">
+            <AnimatePresence mode="wait">
+              {card ? (
+                <motion.div
+                  key={card.t + (currentName || "")}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className={\`inline-block px-3 py-1 rounded-full border text-sm font-bold shadow-sm \${CATEGORY_STYLES[card.c]}\`}>
+                      {(CATEGORIES.find((x) => x.key === card.c) || {}).label || card.c}
+                    </div>
+                  </div>
+
+                  <div className="mt-6 text-3xl leading-snug font-bold text-slate-800 drop-shadow-sm">{card.t}</div>
+
+                  {twist && (
+                    <motion.div
+                      key={twist}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 25 }}
+                      className="mt-8 p-6 rounded-xl bg-gradient-to-r from-pink-100 to-yellow-100 border shadow-inner"
+                    >
+                      <div className="text-sm uppercase tracking-wider text-slate-500 mb-1">Twist</div>
+                      <div className="text-xl font-semibold text-slate-800">{twist}</div>
+                    </motion.div>
+                  )}
+
+                  <div className="mt-8 flex gap-4 flex-wrap">
+                    <TactileButton onClick={drawCard}>Next Turn</TactileButton>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div key="placeholder" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-slate-500 font-medium text-center">
+                  <TactileButton onClick={drawCard}>New Card</TactileButton>
+                  <div className="mt-2 text-base">Press the button to start</div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.render(<App />, document.getElementById("root"));
+  </script>
+</body>
+</html>
