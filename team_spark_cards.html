@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Spark Cards</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-yellow-50 via-pink-50 to-purple-100">
+  <div id="root"></div>
+  <script type="module">
+    import React, { useState } from "https://esm.sh/react@18.2.0";
+    import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
+    import { motion, AnimatePresence } from "https://esm.sh/framer-motion@10.16.4";
+
+    const rng = (n) => Math.floor(Math.random() * n);
+    const shuffle = (arr) => {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+
+    const CATEGORY_STYLES = {
+      Warmup: "bg-sky-100 text-sky-900 border-sky-300",
+      Rapid: "bg-emerald-100 text-emerald-900 border-emerald-300",
+      Story: "bg-fuchsia-100 text-fuchsia-900 border-fuchsia-300",
+      Debate: "bg-amber-100 text-amber-900 border-amber-300",
+      Creative: "bg-indigo-100 text-indigo-900 border-indigo-300",
+      Wild: "bg-rose-100 text-rose-900 border-rose-300",
+    };
+
+    const CATEGORIES = [
+      { key: "Warmup", label: "Warm up" },
+      { key: "Rapid", label: "Rapid fire" },
+      { key: "Story", label: "Story time" },
+      { key: "Debate", label: "Debate" },
+      { key: "Creative", label: "Creative" },
+      { key: "Wild", label: "Wildcard" },
+    ];
+
+    const BASE_DECK = [
+      { c: "Warmup", t: "What is your favorite street food from your home country?" },
+      { c: "Warmup", t: "If you could visit any city in the Middle East or South Asia tomorrow, where would you go and why?" },
+      { c: "Warmup", t: "Share one traditional dish you miss the most when abroad." },
+      { c: "Warmup", t: "Tell us about a festival or holiday you love celebrating." },
+      { c: "Rapid", t: "Name 3 famous football players from the region — go!" },
+      { c: "Rapid", t: "List 5 things you always buy at a local market or souq." },
+      { c: "Story", t: "Tell a funny story from a family gathering or wedding." },
+      { c: "Story", t: "Share a childhood memory of playing a street or school game." },
+      { c: "Debate", t: "Tea vs Coffee — which is the real king of drinks?" },
+      { c: "Debate", t: "Should shawarma be eaten with fries inside or outside?" },
+      { c: "Creative", t: "Invent a new flavor of karak tea or juice mix." },
+      { c: "Creative", t: "Imagine a superhero inspired by your city and describe them." },
+      { c: "Wild", t: "If you were a dish, would you be biryani, koshari, or shawarma? Why?" },
+      { c: "Wild", t: "Pretend you are a football commentator narrating someone making tea." },
+    ];
+
+    const TWISTS = [
+      "Answer in only 5 words",
+      "Include one Arabic or Hindi proverb",
+      "Say your answer like a TV news anchor",
+      "Explain it as if to a 5‑year‑old",
+      "Make your answer sound like a movie trailer",
+      "Speak with exaggerated excitement",
+      "Pretend you are convincing a friend at a café",
+      "Switch between loud and whispering voice",
+      "Answer in a short poem or rhyme",
+      "Pretend you are on a cooking show",
+      "Use a football or cricket metaphor",
+      "Give the answer as if you are a storyteller around a fire",
+    ];
+
+    const NAMES = ["Eslam", "Heba", "Ibrahim", "Vindhya", "Salem", "Samiha", "Mahek"];
+
+    function TactileButton({ children, onClick }) {
+      return React.createElement(motion.button, {
+        onClick,
+        whileTap: { scale: 0.92, y: 2 },
+        whileHover: { scale: 1.05 },
+        transition: { type: "spring", stiffness: 500, damping: 25 },
+        className: "px-6 py-3 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white text-lg font-semibold shadow-md hover:shadow-lg active:shadow-inner"
+      }, children);
+    }
+
+    function TeamSparkCards() {
+      const [card, setCard] = useState(null);
+      const [twist, setTwist] = useState(null);
+      const [deck, setDeck] = useState(shuffle(BASE_DECK));
+      const [idx, setIdx] = useState(-1);
+
+      const currentName = idx >= 0 ? NAMES[idx % NAMES.length] : null;
+
+      const drawCard = () => {
+        setIdx((prev) => (prev + 1) % NAMES.length);
+
+        let nextDeck = deck;
+        if (nextDeck.length === 0) nextDeck = shuffle(BASE_DECK);
+        const [top, ...rest] = nextDeck;
+        setCard(top);
+        setDeck(rest);
+
+        setTwist(TWISTS[rng(TWISTS.length)]);
+      };
+
+      return React.createElement("div", {className: "min-h-screen bg-gradient-to-br from-yellow-50 via-pink-50 to-purple-100 p-10 flex flex-col items-center justify-center text-xl"},
+        React.createElement("h1", {className: "text-5xl font-extrabold mb-6 drop-shadow-sm text-purple-700"}, "🎲 Team Spark Cards"),
+        React.createElement("div", {className: "mb-6 text-3xl font-bold text-purple-800"}, currentName ? `Current Player: ${currentName}` : "Click New Card to start"),
+        React.createElement("div", {className: "rounded-3xl border-4 border-white/70 bg-white/90 shadow-2xl p-12 w-full max-w-3xl relative overflow-hidden"},
+          React.createElement(AnimatePresence, {mode: "wait"},
+            card ? React.createElement(motion.div, {
+              key: card.t + (currentName || ""),
+              initial: { opacity: 0, y: 20 },
+              animate: { opacity: 1, y: 0 },
+              exit: { opacity: 0, y: -20 },
+              transition: { type: "spring", stiffness: 200, damping: 25 }
+            },
+              React.createElement("div", {className: "flex items-center justify-between"},
+                React.createElement("div", {className: `inline-block px-3 py-1 rounded-full border text-sm font-bold shadow-sm ${CATEGORY_STYLES[card.c]}`},
+                  (CATEGORIES.find((x) => x.key === card.c) || {}).label || card.c
+                )
+              ),
+              React.createElement("div", {className: "mt-6 text-3xl leading-snug font-bold text-slate-800 drop-shadow-sm"}, card.t),
+              twist && React.createElement(motion.div, {
+                key: twist,
+                initial: { opacity: 0, y: 10 },
+                animate: { opacity: 1, y: 0 },
+                exit: { opacity: 0, y: -10 },
+                transition: { type: "spring", stiffness: 200, damping: 25 },
+                className: "mt-8 p-6 rounded-xl bg-gradient-to-r from-pink-100 to-yellow-100 border shadow-inner"
+              },
+                React.createElement("div", {className: "text-sm uppercase tracking-wider text-slate-500 mb-1"}, "Twist"),
+                React.createElement("div", {className: "text-xl font-semibold text-slate-800"}, twist)
+              ),
+              React.createElement("div", {className: "mt-8 flex gap-4 flex-wrap"},
+                React.createElement(TactileButton, {onClick: drawCard}, "Next Turn")
+              )
+            ) : React.createElement(motion.div, {key: "placeholder", initial: { opacity: 0 }, animate: { opacity: 1 }, className: "text-slate-500 font-medium text-center"},
+              React.createElement(TactileButton, {onClick: drawCard}, "New Card"),
+              React.createElement("div", {className: "mt-2 text-base"}, "Press the button to start")
+            )
+          )
+        )
+      );
+    }
+
+    const root = createRoot(document.getElementById("root"));
+    root.render(React.createElement(TeamSparkCards));
+  </script>
+</body>
+</html>
