@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The EPSO Reply Rater</title>
+    <title>The EPSO Challenge</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -13,278 +13,357 @@
             -moz-osx-font-smoothing: grayscale;
         }
         .feedback-card {
-            transition: all 0.3s ease-in-out;
-            transform: translateY(10px);
+            transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transform: scale(0.95) translateY(20px);
             opacity: 0;
         }
         .feedback-card.show {
-            transform: translateY(0);
+            transform: scale(1) translateY(0);
             opacity: 1;
+        }
+        .score-change {
+            animation: score-pop 0.5s ease-out;
+        }
+        @keyframes score-pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); color: #4f46e5; }
+            100% { transform: scale(1); }
+        }
+        .screen {
+            display: none;
+        }
+        .screen.active {
+            display: block;
         }
     </style>
 </head>
-<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+<body class="bg-slate-50">
 
-    <div class="w-full max-w-2xl bg-white rounded-xl shadow-lg p-6 md:p-8">
-        <div id="game-container">
-            <div class="text-center mb-6">
-                <h1 class="text-2xl md:text-3xl font-bold text-slate-800">The EPSO Reply Rater</h1>
-                <p class="text-slate-500 mt-1">Hone your customer communication skills.</p>
-            </div>
-
-            <!-- Situation Display -->
-            <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg mb-6">
-                <p class="font-semibold text-red-800">Customer Message:</p>
-                <p id="situation-text" class="text-red-700 mt-1"></p>
-            </div>
-
-            <!-- Agent Input -->
-            <div>
-                <label for="agent-reply" class="block text-sm font-medium text-slate-700 mb-1">Your Reply:</label>
-                <textarea id="agent-reply" rows="6" class="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Type your best EPSO response here..."></textarea>
-            </div>
-
-            <div class="mt-6 flex justify-center">
-                <button id="submit-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
-                    Rate My Reply
+    <div class="w-full max-w-3xl mx-auto my-8 p-4">
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active text-center bg-white p-8 md:p-12 rounded-2xl shadow-lg">
+            <h1 class="text-4xl font-extrabold text-slate-800">The EPSO Challenge</h1>
+            <p class="text-slate-500 mt-2">Welcome! Enter your name to begin the training simulation.</p>
+            <form id="start-form" class="mt-8 flex flex-col items-center">
+                <input type="text" id="player-name" class="w-full max-w-sm text-center p-3 border-2 border-slate-300 rounded-lg text-lg focus:ring-4 focus:ring-indigo-200 focus:border-indigo-500 transition" placeholder="Enter your name..." required>
+                <button type="submit" class="mt-4 bg-indigo-600 text-white font-bold py-3 px-10 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                    Start Challenge
                 </button>
+            </form>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <!-- Header -->
+            <div class="flex justify-between items-center mb-6 p-4 bg-white rounded-xl shadow-md">
+                <div>
+                    <p class="text-sm text-slate-500">Player</p>
+                    <p id="display-player-name" class="font-bold text-slate-800 text-lg"></p>
+                </div>
+                <div>
+                    <p class="text-sm text-slate-500 text-right">Total Score</p>
+                    <p id="display-total-score" class="font-bold text-indigo-600 text-lg text-right">0</p>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <!-- Situation Display -->
+                <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg mb-6">
+                    <p class="font-semibold text-amber-800">Customer Message (<span id="progress-text"></span>):</p>
+                    <p id="situation-text" class="text-amber-900 mt-1 font-medium"></p>
+                </div>
+
+                <!-- Agent Input -->
+                <div>
+                    <label for="agent-reply" class="block text-sm font-medium text-slate-700 mb-2">Your Reply:</label>
+                    <textarea id="agent-reply" rows="6" class="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Type your best EPSO response here..."></textarea>
+                </div>
+
+                <div class="mt-6 flex justify-center">
+                    <button id="submit-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                        Rate My Reply
+                    </button>
+                </div>
             </div>
         </div>
 
-        <!-- Feedback Display -->
-        <div id="feedback-container" class="hidden">
-            <h2 class="text-xl md:text-2xl font-bold text-slate-800 text-center mb-4">Your EPSO Breakdown</h2>
-            <div class="space-y-3">
-                <!-- Empathise -->
-                <div id="e-feedback" class="feedback-card flex items-start p-4 rounded-lg">
-                    <div class="mr-3 flex-shrink-0">
-                        <span class="text-2xl">❤️</span>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-slate-700">E - Empathise</h3>
-                        <p class="text-slate-600 text-sm"></p>
-                    </div>
-                </div>
-                 <!-- Personalise -->
-                 <div id="p-feedback" class="feedback-card flex items-start p-4 rounded-lg">
-                    <div class="mr-3 flex-shrink-0">
-                        <span class="text-2xl">🎯</span>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-slate-700">P - Personalise</h3>
-                        <p class="text-slate-600 text-sm"></p>
-                    </div>
-                </div>
-                 <!-- Solution -->
-                 <div id="s-feedback" class="feedback-card flex items-start p-4 rounded-lg">
-                    <div class="mr-3 flex-shrink-0">
-                        <span class="text-2xl">💡</span>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-slate-700">S - Solution</h3>
-                        <p class="text-slate-600 text-sm"></p>
-                    </div>
-                </div>
-                 <!-- Own -->
-                 <div id="o-feedback" class="feedback-card flex items-start p-4 rounded-lg">
-                    <div class="mr-3 flex-shrink-0">
-                        <span class="text-2xl">🤝</span>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-slate-700">O - Own</h3>
-                        <p class="text-slate-600 text-sm"></p>
-                    </div>
-                </div>
+        <!-- Feedback Screen -->
+        <div id="feedback-screen" class="screen">
+            <div class="text-center mb-6">
+                <h2 class="text-3xl font-bold text-slate-800">Your EPSO Breakdown</h2>
+                <p class="text-slate-500">Score for this reply: <span id="reply-score" class="font-bold text-indigo-600"></span></p>
             </div>
-            <div class="mt-6 flex justify-center">
-                <button id="next-btn" class="bg-slate-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-slate-500 transition-transform transform hover:scale-105">
+            <div class="space-y-4">
+                <div id="e-feedback" class="feedback-card flex items-start p-4 rounded-xl shadow"></div>
+                <div id="p-feedback" class="feedback-card flex items-start p-4 rounded-xl shadow"></div>
+                <div id="s-feedback" class="feedback-card flex items-start p-4 rounded-xl shadow"></div>
+                <div id="o-feedback" class="feedback-card flex items-start p-4 rounded-xl shadow"></div>
+            </div>
+            <div class="mt-8 flex justify-center">
+                <button id="next-btn" class="bg-slate-700 text-white font-bold py-3 px-8 rounded-lg hover:bg-slate-800 transition-transform transform hover:scale-105">
                     Next Situation
                 </button>
             </div>
         </div>
+        
+        <!-- End Screen -->
+        <div id="end-screen" class="screen text-center bg-white p-8 md:p-12 rounded-2xl shadow-lg">
+             <h2 class="text-4xl font-extrabold text-slate-800">Challenge Complete!</h2>
+             <p class="text-slate-500 mt-2">Well done, <span id="final-player-name" class="font-bold"></span>!</p>
+             <p class="mt-6 text-lg text-slate-600">Your Final Score:</p>
+             <p class="text-6xl font-bold text-indigo-600 my-2" id="final-score"></p>
+             <div class="mt-8 flex justify-center space-x-4">
+                <button id="leaderboard-btn" class="bg-white border-2 border-slate-300 text-slate-700 font-bold py-3 px-8 rounded-lg hover:bg-slate-100 transition-transform transform hover:scale-105">
+                    View Leaderboard
+                </button>
+                <button id="restart-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">
+                    Practice Again
+                </button>
+             </div>
+        </div>
 
-        <div id="end-screen" class="hidden text-center py-8">
-            <h2 class="text-2xl md:text-3xl font-bold text-slate-800">Workshop Complete!</h2>
-            <p class="text-slate-500 mt-2 mb-6">Great work applying the EPSO framework.</p>
-            <button id="restart-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
-                Practice Again
-            </button>
+        <!-- Leaderboard Screen -->
+        <div id="leaderboard-screen" class="screen bg-white p-8 md:p-12 rounded-2xl shadow-lg">
+            <h2 class="text-3xl font-extrabold text-slate-800 text-center mb-6">Leaderboard</h2>
+            <div class="space-y-3" id="leaderboard-list">
+                <!-- Leaderboard items will be injected here -->
+            </div>
+             <div class="mt-8 flex justify-center">
+                 <button id="back-to-start-btn" class="bg-slate-200 text-slate-800 font-bold py-3 px-8 rounded-lg hover:bg-slate-300 transition-transform transform hover:scale-105">
+                    Back to Start
+                </button>
+             </div>
         </div>
 
     </div>
 
     <script>
-        const situations = [
-            {
-                id: 1,
-                text: "I’ve been waiting for three days and nobody has fixed my issue! This is the worst service ever.",
-                personaliseKeywords: ["three days", "3 days", "waiting"]
-            },
-            {
-                id: 2,
-                text: "Why do you people keep ignoring my messages? Do I need to call your CEO to get this resolved?",
-                personaliseKeywords: ["messages", "ignoring", "ceo"]
-            },
-            {
-                id: 3,
-                text: "Every time I renew my package, something goes wrong. I’m sick of this!",
-                personaliseKeywords: ["renew", "package", "every time"]
-            },
-            {
-                id: 4,
-                text: "Check the chat or ask your friends because I have been explaining again in every chat.",
-                personaliseKeywords: ["chat", "explaining", "again"]
-            },
-            {
-                id: 5,
-                text: "My payment was deducted, but I can’t see the listing on my account.",
-                personaliseKeywords: ["payment", "deducted", "listing"]
-            },
-            {
-                id: 6,
-                text: "I specifically wanted my ad under Villas in Abu Dhabi, but now you tell me I have to recreate it under Apartments.",
-                personaliseKeywords: ["villas", "abu dhabi", "apartments", "recreate"]
-            },
-            {
-                id: 7,
-                text: "I did not know that pet selling is not permitted.",
-                personaliseKeywords: ["pet", "selling", "permitted"]
-            },
-            {
-                id: 8,
-                text: "I got scammed on WhatsApp, you are a bad platform and not safe!",
-                personaliseKeywords: ["scammed", "whatsapp", "safe"]
-            }
-        ];
+        // DOM Elements
+        const screens = {
+            start: document.getElementById('start-screen'),
+            game: document.getElementById('game-screen'),
+            feedback: document.getElementById('feedback-screen'),
+            end: document.getElementById('end-screen'),
+            leaderboard: document.getElementById('leaderboard-screen'),
+        };
 
-        let currentSituationIndex = 0;
-
+        const startForm = document.getElementById('start-form');
+        const playerNameInput = document.getElementById('player-name');
         const situationTextEl = document.getElementById('situation-text');
         const agentReplyEl = document.getElementById('agent-reply');
         const submitBtn = document.getElementById('submit-btn');
         const nextBtn = document.getElementById('next-btn');
         const restartBtn = document.getElementById('restart-btn');
-        const gameContainer = document.getElementById('game-container');
-        const feedbackContainer = document.getElementById('feedback-container');
-        const endScreen = document.getElementById('end-screen');
-
-        const eFeedback = document.getElementById('e-feedback');
-        const pFeedback = document.getElementById('p-feedback');
-        const sFeedback = document.getElementById('s-feedback');
-        const oFeedback = document.getElementById('o-feedback');
+        const leaderboardBtn = document.getElementById('leaderboard-btn');
+        const backToStartBtn = document.getElementById('back-to-start-btn');
         
+        // Game State
+        let currentPlayer = '';
+        let totalScore = 0;
+        let currentSituationIndex = 0;
+        
+        const situations = [
+            { text: "I’ve been waiting for three days and nobody has fixed my issue! This is the worst service ever.", keywords: ["three days", "3 days", "waiting", "fixed"] },
+            { text: "Why do you people keep ignoring my messages? Do I need to call your CEO to get this resolved?", keywords: ["messages", "ignoring", "ceo", "resolved"] },
+            { text: "Every time I renew my package, something goes wrong. I’m sick of this!", keywords: ["renew", "package", "every time", "wrong"] },
+            { text: "Check the chat or ask your friends because I have been explaining again in every chat.", keywords: ["chat", "explaining", "again", "friends"] },
+            { text: "My payment was deducted, but I can’t see the listing on my account.", keywords: ["payment", "deducted", "listing", "account"] },
+            { text: "I specifically wanted my ad under Villas in Abu Dhabi, but now you tell me I have to recreate it under Apartments.", keywords: ["villas", "abu dhabi", "apartments", "recreate"] },
+            { text: "I did not know that pet selling is not permitted.", keywords: ["pet", "selling", "permitted", "know"] },
+            { text: "I got scammed on WhatsApp, you are a bad platform and not safe!", keywords: ["scammed", "whatsapp", "safe", "platform"] }
+        ];
+
+        // --- Utility Functions ---
+        const switchScreen = (screenName) => {
+            Object.values(screens).forEach(screen => screen.classList.remove('active'));
+            screens[screenName].classList.add('active');
+        };
+
+        const updateScoreDisplay = () => {
+            const scoreEl = document.getElementById('display-total-score');
+            scoreEl.textContent = totalScore;
+            scoreEl.classList.add('score-change');
+            setTimeout(() => scoreEl.classList.remove('score-change'), 500);
+        };
+        
+        // --- Game Logic ---
+        function startGame() {
+            currentPlayer = playerNameInput.value.trim() || 'Agent';
+            totalScore = 0;
+            currentSituationIndex = 0;
+            document.getElementById('display-player-name').textContent = currentPlayer;
+            updateScoreDisplay();
+            loadSituation();
+            switchScreen('game');
+        }
+
         function loadSituation() {
             if (currentSituationIndex < situations.length) {
                 situationTextEl.textContent = situations[currentSituationIndex].text;
                 agentReplyEl.value = '';
-                gameContainer.style.display = 'block';
-                feedbackContainer.style.display = 'none';
-                endScreen.style.display = 'none';
-                submitBtn.disabled = false;
+                document.getElementById('progress-text').textContent = `Scenario ${currentSituationIndex + 1} of ${situations.length}`;
+                switchScreen('game');
             } else {
-                gameContainer.style.display = 'none';
-                feedbackContainer.style.display = 'none';
-                endScreen.style.display = 'block';
+                endGame();
             }
         }
-
-        function rateReply(reply) {
-            const lowerReply = reply.toLowerCase();
-            const feedback = {};
-
-            // E - Empathise
-            const empathyWords = ["frustrating", "understand", "imagine", "sorry to hear", "difficult", "annoying", "concern"];
-            if (empathyWords.some(word => lowerReply.includes(word))) {
-                feedback.empathise = { success: true, text: "Great start! You acknowledged the customer's feelings, which helps to de-escalate the situation." };
+        
+        function rateReply() {
+            const reply = agentReplyEl.value.toLowerCase();
+            let scores = { e: 0, p: 0, s: 0, o: 0 };
+            let feedback = {};
+            
+            // E - Empathise (Max 25 points)
+            const empathyWords = ["frustrating", "understand", "imagine", "sorry to hear", "difficult", "annoying", "concern", "apologise"];
+            if (empathyWords.some(word => reply.includes(word))) {
+                scores.e = 25;
+                feedback.e = { text: "Excellent empathy! You acknowledged the customer's feelings, which is a perfect start.", icon: '❤️' };
             } else {
-                feedback.empathise = { success: false, text: "Try to start by acknowledging the customer's frustration. Phrases like 'I understand this is frustrating' can make a big difference." };
+                feedback.e = { text: "Acknowledge the customer's frustration first. Phrases like 'I understand this is frustrating' can de-escalate the situation.", icon: '💔' };
             }
 
-            // P - Personalise
-            const personaliseKeywords = situations[currentSituationIndex].personaliseKeywords;
-            if (personaliseKeywords.some(key => lowerReply.includes(key))) {
-                feedback.personalise = { success: true, text: "Excellent! You mentioned a specific detail from their message, proving you've read it carefully." };
+            // P - Personalise (Max 25 points)
+            const personalKeywords = situations[currentSituationIndex].keywords;
+            if (personalKeywords.some(key => reply.includes(key))) {
+                scores.p = 25;
+                feedback.p = { text: "Great personalisation! You referenced a specific detail from their message, proving you've read it carefully.", icon: '🎯' };
             } else {
-                feedback.personalise = { success: false, text: "Good, but could be better. Try referencing a specific keyword from their message (like '" + personaliseKeywords[0] + "') to show you're paying attention." };
+                feedback.p = { text: `Try to mention a specific keyword from their message (e.g., '${personalKeywords[0]}') to show you're not sending a generic reply.`, icon: '🧐' };
             }
 
-            // S - Solution
-            const solutionWords = ["solution", "fix", "resolve", "what we can do", "the reason is", "because", "the next step is", "you can"];
-             if (solutionWords.some(word => lowerReply.includes(word))) {
-                feedback.solution = { success: true, text: "Well done. You've moved towards providing a clear solution or explaining the next steps." };
+            // S - Solution (Max 25 points)
+            const solutionWords = ["solution", "fix", "resolve", "what we can do", "the reason is", "the next step", "you can", "to fix this", "investigate"];
+            if (solutionWords.some(word => reply.includes(word))) {
+                scores.s = 25;
+                feedback.s = { text: "Good! You provided a clear path towards a solution or an explanation of what's next.", icon: '💡' };
             } else {
-                feedback.solution = { success: false, text: "Remember to guide the customer to a solution. Explain what the next step is, or why something has happened." };
+                feedback.s = { text: "Guide the customer to a solution. Explain what the next step is, or why something has happened to move the conversation forward.", icon: '🤔' };
             }
 
-            // O - Own
-            const ownWords = ["i will", "i'll", "my name is", "personally", "myself", "update you", "by", "pm", "am", "make sure", "i am", "i'm"];
-            if (ownWords.some(word => lowerReply.includes(word)) && lowerReply.length > 50) {
-                 feedback.own = { success: true, text: "Fantastic! You took ownership of the issue and provided a clear commitment to follow up." };
+            // O - Own (Max 25 points)
+            const ownWords = ["i will", "i'll", "personally", "myself", "i am", "i'm"];
+            const timelineWords = ["by", "pm", "am", "today", "within", "hour", "soon as"];
+            if (ownWords.some(word => reply.includes(word))) {
+                scores.o += 15;
+            }
+            if (timelineWords.some(word => reply.includes(word))) {
+                scores.o += 10;
+            }
+            if (scores.o >= 25) {
+                feedback.o = { text: "Fantastic ownership! You took personal responsibility and committed to a follow-up.", icon: '🤝' };
+            } else if (scores.o >= 15) {
+                 feedback.o = { text: "Good ownership, but try adding a specific timeline (e.g., 'by 5 PM') to build more confidence.", icon: '👍' };
             } else {
-                feedback.own = { success: false, text: "Try to end with a strong statement of ownership. Use phrases like 'I will personally...' and give a specific timeline for your follow-up." };
+                feedback.o = { text: "End with a strong statement of ownership. Use phrases like 'I will personally...' and give a specific timeline for your follow-up.", icon: '👎' };
             }
             
-            return feedback;
+            const replyScore = scores.e + scores.p + scores.s + scores.o;
+            totalScore += replyScore;
+            
+            displayFeedback(scores, feedback, replyScore);
         }
 
-        function displayFeedback(feedback) {
-            gameContainer.style.display = 'none';
-            feedbackContainer.style.display = 'block';
-
+        function displayFeedback(scores, feedback, replyScore) {
             const feedbackMap = [
-                { el: eFeedback, data: feedback.empathise },
-                { el: pFeedback, data: feedback.personalise },
-                { el: sFeedback, data: feedback.solution },
-                { el: oFeedback, data: feedback.own },
+                { id: 'e-feedback', score: scores.e, data: feedback.e, letter: 'E - Empathise' },
+                { id: 'p-feedback', score: scores.p, data: feedback.p, letter: 'P - Personalise' },
+                { id: 's-feedback', score: scores.s, data: feedback.s, letter: 'S - Solution' },
+                { id: 'o-feedback', score: scores.o, data: feedback.o, letter: 'O - Own' },
             ];
             
             feedbackMap.forEach((item, index) => {
-                const { el, data } = item;
-                el.classList.remove('bg-green-100', 'border-green-400', 'bg-amber-100', 'border-amber-400');
-                el.querySelector('p').textContent = data.text;
+                const el = document.getElementById(item.id);
+                const scoreColor = item.score > 0 ? 'text-green-600' : 'text-slate-400';
+                const bgColor = item.score > 0 ? 'bg-green-50' : 'bg-slate-100';
                 
-                if (data.success) {
-                    el.classList.add('bg-green-100', 'border-green-400');
-                    el.querySelector('h3').classList.add('text-green-800');
-                } else {
-                    el.classList.add('bg-amber-100', 'border-amber-400');
-                     el.querySelector('h3').classList.add('text-amber-800');
-                }
+                el.className = `feedback-card flex items-start p-4 rounded-xl shadow ${bgColor}`;
+                el.innerHTML = `
+                    <div class="mr-4 flex-shrink-0 text-2xl">${item.data.icon}</div>
+                    <div class="flex-grow">
+                        <div class="flex justify-between items-center">
+                            <h3 class="font-bold text-slate-800">${item.letter}</h3>
+                            <p class="font-bold ${scoreColor}">+${item.score} pts</p>
+                        </div>
+                        <p class="text-slate-600 text-sm mt-1">${item.data.text}</p>
+                    </div>
+                `;
                 
-                // Staggered animation
-                setTimeout(() => {
-                    el.classList.add('show');
-                }, index * 100);
+                setTimeout(() => el.classList.add('show'), index * 120);
             });
+            
+            document.getElementById('reply-score').textContent = `${replyScore} / 100`;
+            updateScoreDisplay();
+            switchScreen('feedback');
         }
 
-        submitBtn.addEventListener('click', () => {
-            const reply = agentReplyEl.value;
-            if (reply.trim().length < 10) {
-                alert("Please provide a more detailed response.");
+        function endGame() {
+            document.getElementById('final-player-name').textContent = currentPlayer;
+            document.getElementById('final-score').textContent = totalScore;
+            saveToLeaderboard(currentPlayer, totalScore);
+            switchScreen('end');
+        }
+
+        // --- Leaderboard Logic ---
+        function getLeaderboard() {
+            const board = localStorage.getItem('epsoLeaderboard');
+            return board ? JSON.parse(board) : [];
+        }
+
+        function saveToLeaderboard(name, score) {
+            const board = getLeaderboard();
+            board.push({ name, score });
+            board.sort((a, b) => b.score - a.score);
+            localStorage.setItem('epsoLeaderboard', JSON.stringify(board.slice(0, 10))); // Keep top 10
+        }
+
+        function displayLeaderboard() {
+            const board = getLeaderboard();
+            const listEl = document.getElementById('leaderboard-list');
+            listEl.innerHTML = '';
+
+            if (board.length === 0) {
+                listEl.innerHTML = '<p class="text-center text-slate-500">No scores yet. Be the first!</p>';
                 return;
             }
-            submitBtn.disabled = true;
-            const feedback = rateReply(reply);
-            displayFeedback(feedback);
+
+            board.forEach((entry, index) => {
+                const rankIcons = ['🥇', '🥈', '🥉'];
+                const icon = index < 3 ? `<span class="text-2xl">${rankIcons[index]}</span>` : `<span class="font-bold text-slate-500">${index + 1}</span>`;
+                const el = document.createElement('div');
+                el.className = 'flex items-center justify-between p-4 rounded-lg bg-slate-100';
+                el.innerHTML = `
+                    <div class="flex items-center space-x-4">
+                        ${icon}
+                        <p class="font-bold text-slate-700">${entry.name}</p>
+                    </div>
+                    <p class="font-bold text-indigo-600">${entry.score} pts</p>
+                `;
+                listEl.appendChild(el);
+            });
+            switchScreen('leaderboard');
+        }
+
+        // --- Event Listeners ---
+        startForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            startGame();
         });
 
+        submitBtn.addEventListener('click', rateReply);
+        
         nextBtn.addEventListener('click', () => {
             currentSituationIndex++;
-            // Remove animation classes to allow them to re-trigger
-            [eFeedback, pFeedback, sFeedback, oFeedback].forEach(el => el.classList.remove('show'));
             loadSituation();
         });
+        
+        restartBtn.addEventListener('click', startGame);
+        
+        leaderboardBtn.addEventListener('click', displayLeaderboard);
+        
+        backToStartBtn.addEventListener('click', () => switchScreen('start'));
 
-        restartBtn.addEventListener('click', () => {
-            currentSituationIndex = 0;
-             [eFeedback, pFeedback, sFeedback, oFeedback].forEach(el => el.classList.remove('show'));
-            loadSituation();
-        });
-
-
-        // Initial load
-        loadSituation();
     </script>
 </body>
 </html>
+
