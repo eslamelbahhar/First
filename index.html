@@ -33,56 +33,94 @@
         .highlight-o { background-color: #ede9fe; padding: 1px 3px; border-radius: 4px; font-weight: 500;}
 
         /* Welcome Screen Animation */
-        .welcome-container {
-            position: relative;
-            overflow: hidden;
-        }
         .floating-element {
-            position: absolute;
+            position: fixed;
             will-change: transform;
-            animation: float 15s infinite linear;
+            animation: float 25s infinite linear;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 8px 12px;
+            padding: 8px 16px;
             border-radius: 9999px;
-            background-color: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(4px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            background-color: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.07);
             font-weight: 500;
             color: #475569; /* slate-600 */
+            z-index: 0;
         }
 
         @keyframes float {
-            0% { transform: translateY(120vh) rotate(0deg); opacity: 0; }
+            0% { transform: translateY(110vh) translateX(var(--start-x)) rotate(0deg); opacity: 0; }
             10% { opacity: 1; }
             90% { opacity: 1; }
-            100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
+            100% { transform: translateY(-10vh) translateX(var(--end-x)) rotate(360deg); opacity: 0; }
+        }
+        
+        /* Custom Dropdown */
+        .custom-select-container {
+            position: relative;
+        }
+        .select-chip {
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .select-chip:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .select-options {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            margin-top: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 50;
+            opacity: 0;
+            transform: scale(0.95) translateY(-10px);
+            transition: all 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            pointer-events: none;
+        }
+        .select-options.open {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+            pointer-events: auto;
+        }
+        .select-option {
+            padding: 12px 16px;
+            cursor: pointer;
+        }
+        .select-option:hover {
+            background-color: #f1f5f9;
         }
 
     </style>
 </head>
-<body class="bg-slate-50">
+<body class="bg-slate-100">
 
-    <div class="w-full max-w-4xl mx-auto my-8 p-4">
+    <div id="floating-elements-bg" class="fixed inset-0 z-0 overflow-hidden"></div>
+
+    <div class="relative z-10 w-full max-w-4xl mx-auto my-8 p-4">
         
         <!-- Start Screen -->
-        <div id="start-screen" class="screen active text-center bg-white p-8 md:p-12 rounded-2xl shadow-lg welcome-container">
-            <div id="floating-elements-bg" class="absolute inset-0"></div>
-            <div class="relative z-10">
-                <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800">Impactful Customer Conversations</h1>
-                <p class="text-slate-500 mt-4 text-lg">Welcome to the EPSO Challenge!</p>
-                <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-                    <button id="start-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
-                        Start Group Challenge
-                    </button>
-                    <button id="view-all-time-leaderboard-btn" class="bg-white border-2 border-slate-300 text-slate-700 font-bold py-3 px-8 rounded-lg hover:bg-slate-100 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
-                        All-Time Leaderboard
-                    </button>
-                    <button id="view-data-btn" class="bg-white border-2 border-slate-300 text-slate-700 font-bold py-3 px-8 rounded-lg hover:bg-slate-100 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
-                        View Game Data
-                    </button>
-                </div>
+        <div id="start-screen" class="screen active text-center bg-white/80 backdrop-blur-lg p-8 md:p-16 rounded-2xl shadow-xl border border-slate-200">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800">Impactful Customer Conversations</h1>
+            <p class="text-slate-600 mt-4 text-lg">Welcome to the EPSO Challenge!</p>
+            <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button id="start-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
+                    Start Group Challenge
+                </button>
+                <button id="view-all-time-leaderboard-btn" class="bg-white border-2 border-slate-300 text-slate-700 font-bold py-3 px-8 rounded-lg hover:bg-slate-100 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
+                    All-Time Leaderboard
+                </button>
+                <button id="view-data-btn" class="bg-white border-2 border-slate-300 text-slate-700 font-bold py-3 px-8 rounded-lg hover:bg-slate-100 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
+                    View Game Data
+                </button>
             </div>
         </div>
 
@@ -98,10 +136,18 @@
                 <!-- Agent Input -->
                 <div class="space-y-4">
                     <div>
-                        <label for="round-player-name" class="block text-sm font-medium text-slate-700 mb-1">Select Your Name:</label>
-                        <select id="round-player-name" class="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition bg-white">
-                            <!-- Names will be populated here -->
-                        </select>
+                        <label for="round-player-name" class="block text-sm font-medium text-slate-700 mb-2">Select Your Name:</label>
+                        <div class="custom-select-container">
+                            <div id="select-chip-button" class="select-chip w-full p-3 border border-slate-300 rounded-md bg-white flex justify-between items-center">
+                                <span id="selected-name-text" class="text-slate-500">Select Your Name...</span>
+                                <svg class="w-5 h-5 text-slate-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
+                                </svg>
+                            </div>
+                            <div id="select-options-list" class="select-options shadow-xl">
+                                <!-- Options will be populated here -->
+                            </div>
+                        </div>
                     </div>
                     <div>
                         <label for="agent-reply" class="block text-sm font-medium text-slate-700 mb-1">Your Reply:</label>
@@ -136,10 +182,10 @@
             </div>
 
             <div class="space-y-4">
-                <div id="e-feedback" class="feedback-card flex items-start p-4 rounded-xl shadow"></div>
-                <div id="p-feedback" class="feedback-card flex items-start p-4 rounded-xl shadow"></div>
-                <div id="s-feedback" class="feedback-card flex items-start p-4 rounded-xl shadow"></div>
-                <div id="o-feedback" class="feedback-card flex items-start p-4 rounded-xl shadow"></div>
+                <div id="e-feedback" class="feedback-card flex items-start p-4 rounded-xl shadow bg-white"></div>
+                <div id="p-feedback" class="feedback-card flex items-start p-4 rounded-xl shadow bg-white"></div>
+                <div id="s-feedback" class="feedback-card flex items-start p-4 rounded-xl shadow bg-white"></div>
+                <div id="o-feedback" class="feedback-card flex items-start p-4 rounded-xl shadow bg-white"></div>
             </div>
             <div class="mt-8 flex justify-center">
                 <button id="next-btn" class="bg-slate-700 text-white font-bold py-3 px-8 rounded-lg hover:bg-slate-800 transition-transform transform hover:scale-105">
@@ -206,7 +252,13 @@
         const viewAllTimeLeaderboardBtn = document.getElementById('view-all-time-leaderboard-btn');
         const viewDataBtn = document.getElementById('view-data-btn');
         const situationTextEl = document.getElementById('situation-text');
-        const roundPlayerNameSelect = document.getElementById('round-player-name');
+        
+        // Custom Dropdown Elements
+        const selectChipBtn = document.getElementById('select-chip-button');
+        const selectedNameText = document.getElementById('selected-name-text');
+        const selectOptionsList = document.getElementById('select-options-list');
+        let selectedPlayerName = '';
+
         const agentReplyEl = document.getElementById('agent-reply');
         const submitBtn = document.getElementById('submit-btn');
         const nextBtn = document.getElementById('next-btn');
@@ -245,12 +297,19 @@
         };
 
         function populateNameDropdown() {
-            roundPlayerNameSelect.innerHTML = '<option value="">Select Your Name...</option>';
+            selectOptionsList.innerHTML = '';
             participants.forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
+                const option = document.createElement('div');
+                option.className = 'select-option';
+                option.dataset.value = name;
                 option.textContent = name;
-                roundPlayerNameSelect.appendChild(option);
+                option.addEventListener('click', () => {
+                    selectedPlayerName = name;
+                    selectedNameText.textContent = name;
+                    selectedNameText.classList.remove('text-slate-500');
+                    selectOptionsList.classList.remove('open');
+                });
+                selectOptionsList.appendChild(option);
             });
         }
         
@@ -259,16 +318,19 @@
             if(!container) return;
             container.innerHTML = '';
             const elements = [
-                ...participants.slice(0, 5), // show a few names
+                ...participants,
                 '❤️', '⭐', '👍', '💬', '🤝'
             ];
             elements.forEach((text, i) => {
                 const el = document.createElement('div');
                 el.className = 'floating-element';
                 el.textContent = text;
-                el.style.left = `${Math.random() * 90}%`;
-                el.style.animationDuration = `${10 + Math.random() * 10}s`;
-                el.style.animationDelay = `${Math.random() * 15}s`;
+                const startX = `${Math.random() * 80 + 10}vw`;
+                const endX = `${Math.random() * 80 + 10}vw`;
+                el.style.setProperty('--start-x', startX);
+                el.style.setProperty('--end-x', endX);
+                el.style.animationDuration = `${15 + Math.random() * 15}s`;
+                el.style.animationDelay = `${Math.random() * 20}s`;
                 el.style.fontSize = `${14 + Math.random() * 8}px`;
                 container.appendChild(el);
             });
@@ -285,7 +347,9 @@
             if (currentSituationIndex < situations.length) {
                 situationTextEl.textContent = situations[currentSituationIndex].text;
                 agentReplyEl.value = '';
-                roundPlayerNameSelect.value = ''; // Clear name for next player
+                selectedPlayerName = '';
+                selectedNameText.textContent = 'Select Your Name...';
+                selectedNameText.classList.add('text-slate-500');
                 document.getElementById('progress-text').textContent = `Scenario ${currentSituationIndex + 1} of ${situations.length}`;
                 switchScreen('game');
             } else {
@@ -294,8 +358,8 @@
         }
         
         function rateReply() {
-            const playerName = roundPlayerNameSelect.value;
-            originalReplyText = agentReplyEl.value; // Store original casing
+            const playerName = selectedPlayerName;
+            originalReplyText = agentReplyEl.value;
             const reply = originalReplyText.toLowerCase();
 
             if (!playerName) {
@@ -564,8 +628,19 @@
                     displayGameData();
                 }
             });
+            
+            selectChipBtn.addEventListener('click', () => {
+                selectOptionsList.classList.toggle('open');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!selectChipBtn.contains(e.target)) {
+                    selectOptionsList.classList.remove('open');
+                }
+            });
         });
 
     </script>
 </body>
 </html>
+
