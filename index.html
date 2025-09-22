@@ -36,7 +36,7 @@
         .floating-element {
             position: fixed;
             will-change: transform;
-            animation: float 25s infinite linear;
+            animation: float 20s infinite linear;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -48,13 +48,14 @@
             font-weight: 500;
             color: #475569; /* slate-600 */
             z-index: 0;
-            transition: transform 1s ease-in, opacity 1s ease-in; /* For exit animation */
+            transition: opacity 0.5s ease-in;
+            opacity: 0; /* Ensure elements start invisible */
         }
 
         @keyframes float {
             0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
-            10% { opacity: 1; }
-            90% { opacity: 1; }
+            5% { opacity: 1; }
+            95% { opacity: 1; }
             100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
         }
         
@@ -74,12 +75,12 @@
             position: absolute;
             top: 100%;
             left: 0;
-            right: 0;
             background: white;
             border: 1px solid #e2e8f0;
             border-radius: 0.75rem;
             margin-top: 8px;
-            max-height: 200px;
+            max-height: 160px; /* Smaller dropdown height */
+            width: 280px; /* Smaller dropdown width */
             overflow-y: auto;
             z-index: 50;
             opacity: 0;
@@ -93,7 +94,7 @@
             pointer-events: auto;
         }
         .select-option {
-            padding: 12px 16px;
+            padding: 10px 16px;
             cursor: pointer;
         }
         .select-option:hover {
@@ -107,6 +108,22 @@
     <div id="floating-elements-bg" class="fixed inset-0 z-0 overflow-hidden"></div>
 
     <div class="relative z-10 w-full max-w-4xl mx-auto my-8 p-4 flex items-center" style="min-height: 80vh;">
+        
+        <div class="absolute top-6 right-6 z-20 flex gap-2">
+            <button id="fullscreen-btn" class="hidden p-2 rounded-full bg-slate-200 hover:bg-slate-300 transition">
+                <svg id="fullscreen-enter-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 0h-4m4 0l-5-5" />
+                </svg>
+                <svg id="fullscreen-exit-icon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-600 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <button id="home-btn" class="hidden p-2 rounded-full bg-slate-200 hover:bg-slate-300 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+            </button>
+        </div>
         
         <!-- Start Screen -->
         <div id="start-screen" class="screen active w-full text-center bg-white/80 backdrop-blur-lg p-8 md:p-16 rounded-2xl shadow-xl border border-slate-200 justify-center items-center flex-col">
@@ -139,7 +156,7 @@
                 <!-- Agent Input -->
                 <div class="space-y-4">
                     <div>
-                        <label for="round-player-name" class="block text-sm font-medium text-slate-700 mb-2">Select Your Name:</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-2">Select Your Name:</label>
                         <div class="custom-select-container">
                             <div id="select-chip-button" class="select-chip w-full p-3 border border-slate-300 rounded-md bg-white flex justify-between items-center">
                                 <span id="selected-name-text" class="text-slate-500">Select Your Name...</span>
@@ -259,6 +276,10 @@
         const viewAllTimeLeaderboardBtn = document.getElementById('view-all-time-leaderboard-btn');
         const viewDataBtn = document.getElementById('view-data-btn');
         const situationTextEl = document.getElementById('situation-text');
+        const homeBtn = document.getElementById('home-btn');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const fullscreenEnterIcon = document.getElementById('fullscreen-enter-icon');
+        const fullscreenExitIcon = document.getElementById('fullscreen-exit-icon');
         
         // Custom Dropdown Elements
         const selectChipBtn = document.getElementById('select-chip-button');
@@ -302,8 +323,14 @@
             Object.values(screens).forEach(screen => screen.classList.remove('active'));
             screens[screenName].classList.add('active');
              if (screenName === 'start') {
-                createFloatingElements(); // Regenerate for next time
-            }
+                homeBtn.classList.add('hidden');
+                fullscreenBtn.classList.add('hidden');
+                document.getElementById('floating-elements-bg').style.opacity = '1';
+                createFloatingElements();
+             } else {
+                homeBtn.classList.remove('hidden');
+                fullscreenBtn.classList.remove('hidden');
+             }
         };
 
         function populateNameDropdown() {
@@ -327,41 +354,40 @@
             const container = document.getElementById('floating-elements-bg');
             if(!container) return;
             container.innerHTML = '';
-            const elements = [
-                ...participants,
-                '❤️', '⭐', '👍', '💬', '🤝'
-            ];
-            elements.forEach((text, i) => {
+            const elements = [ ...participants, '❤️', '⭐', '👍', '💬', '🤝' ];
+            elements.forEach((text) => {
                 const el = document.createElement('div');
                 el.className = 'floating-element';
                 el.textContent = text;
                 el.style.left = `${5 + Math.random() * 90}vw`;
-                el.style.animationDuration = `${20 + Math.random() * 15}s`;
-                el.style.animationDelay = `${Math.random() * 25}s`;
+                el.style.animationDuration = `${12 + Math.random() * 8}s`; // Faster speed
+                el.style.animationDelay = `${Math.random() * 15}s`;
                 el.style.fontSize = `${14 + Math.random() * 8}px`;
-                el.style.transform = '';
-                el.style.opacity = '';
                 container.appendChild(el);
             });
         }
         
         // --- Game Logic ---
         function initiateGameStart() {
-            const floatingElements = document.querySelectorAll('.floating-element');
-            floatingElements.forEach(el => {
-                const randomX = (Math.random() - 0.5) * 20; // -10 to +10 vw
-                el.style.transform = `translateY(-110vh) translateX(${randomX}vw) rotate(180deg) scale(0.3)`;
-                el.style.opacity = '0';
-            });
-
+            const floatingElementsContainer = document.getElementById('floating-elements-bg');
+            floatingElementsContainer.style.transition = 'opacity 0.5s ease-out';
+            floatingElementsContainer.style.opacity = '0';
             setTimeout(() => {
                 startGame();
-            }, 1000); // Wait 1 second for animation
+            }, 500); // Wait for fade out
+        }
+        
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
         }
 
         function startGame() {
             sessionScores = {};
             currentSituationIndex = 0;
+            shuffleArray(situations);
             loadSituation();
         }
 
@@ -626,8 +652,30 @@
             if(backToStartBtn) backToStartBtn.addEventListener('click', () => switchScreen('start'));
         }
 
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+        
+        function updateFullscreenIcon(){
+            if(document.fullscreenElement){
+                fullscreenEnterIcon.classList.add('hidden');
+                fullscreenExitIcon.classList.remove('hidden');
+            } else {
+                fullscreenEnterIcon.classList.remove('hidden');
+                fullscreenExitIcon.classList.add('hidden');
+            }
+        }
+
+
         // --- Initialisation ---
         document.addEventListener('DOMContentLoaded', () => {
+            participants.sort((a,b) => a.localeCompare(b));
             populateNameDropdown();
             createFloatingElements();
 
@@ -640,6 +688,14 @@
             });
             viewAllTimeLeaderboardBtn.addEventListener('click', displayAllTimeLeaderboard);
             viewDataBtn.addEventListener('click', displayGameData);
+            homeBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to return to the home screen? Your current game progress will be lost.')) {
+                    switchScreen('start');
+                }
+            });
+            fullscreenBtn.addEventListener('click', toggleFullScreen);
+            document.addEventListener('fullscreenchange', updateFullscreenIcon);
+
 
             document.getElementById('data-back-to-start-btn').addEventListener('click', () => switchScreen('start'));
             document.getElementById('copy-csv-btn').addEventListener('click', copyDataAsCsv);
