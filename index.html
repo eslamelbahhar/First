@@ -48,7 +48,7 @@
             font-weight: 500;
             color: #475569; /* slate-600 */
             z-index: 0;
-            transition: opacity 0.5s ease-in;
+            transition: transform 1s ease-in, opacity 1s ease-in;
             opacity: 0; /* Ensure elements start invisible */
         }
 
@@ -150,9 +150,6 @@
                 <!-- Header -->
                 <div class="flex justify-between items-center mb-6 border-b pb-4">
                     <h2 class="text-xl font-bold text-slate-800">Scenario <span id="scenario-number">1</span>/<span id="total-scenarios">12</span></h2>
-                    <div id="timer" class="text-xl font-bold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-lg transition-colors">
-                        <span id="timer-text">1:00</span>
-                    </div>
                 </div>
 
                 <!-- Situation Display -->
@@ -299,15 +296,11 @@
         const submitBtn = document.getElementById('submit-btn');
         const nextBtn = document.getElementById('next-btn');
         const highlightedReplyEl = document.getElementById('highlighted-reply');
-
-        const timerEl = document.getElementById('timer');
-        const timerTextEl = document.getElementById('timer-text');
         
         // Game State
         let sessionScores = {};
         let currentSituationIndex = 0;
         let originalReplyText = '';
-        let timerInterval;
         
         const participants = [
             "Osama Khalid", "Erfan Abuhassan", "Ahmed Youssef", "Kim Del Mundo", "Cristelle Anne Ventucillo",
@@ -323,7 +316,7 @@
             { text: "My payment was deducted, but I can't see the listing on my account.", keywords: ["payment", "deducted", "listing", "account"] },
             { text: "I specifically requested my ad to appear under Villas in Abu Dhabi, but it's showing under Apartments.", keywords: ["villas", "abu dhabi", "apartments", "showing"] },
             { text: "Hello, can you delete and unlink my number from this account. Thank you.", keywords: ["delete", "unlink", "number", "account"] },
-            { text: "I posted it before, and it was published and not rejected. How come?", keywords: ["before", "published", "rejected", "how come"] },
+            { text: "I posted it before, and it was live and not rejected. How come?", keywords: ["before", "live", "rejected", "how come"] },
             { text: "There was an advertisement that failed to be published. I need a refund.", keywords: ["advertisement", "failed", "published", "refund"] },
             { text: "My post was rejected due to duplication. However, I couldn't see my expired post to reactivate it. Please fix it or give me the option to advertise a new post.", keywords: ["rejected", "duplication", "expired", "reactivate", "new post"] },
             { text: "I'm trying to list an ad, but I cannot make a payment. I've tried to pay from 2 different banks, but the same error is showing.", keywords: ["payment", "pay", "banks", "error"] },
@@ -381,9 +374,12 @@
         
         // --- Game Logic ---
         function initiateGameStart() {
-            const floatingElementsContainer = document.getElementById('floating-elements-bg');
-            floatingElementsContainer.style.transition = 'opacity 0.5s ease-out';
-            floatingElementsContainer.style.opacity = '0';
+            const floatingElements = document.querySelectorAll('.floating-element');
+            floatingElements.forEach(el => {
+                el.style.animation = 'none'; // Stop animation
+                el.style.opacity = '0'; // Fade out
+            });
+
             setTimeout(() => {
                 startGame();
             }, 500); // Wait for fade out
@@ -412,63 +408,23 @@
                 selectedNameText.classList.add('text-slate-500');
                 document.getElementById('scenario-number').textContent = currentSituationIndex + 1;
                 document.getElementById('total-scenarios').textContent = situations.length;
-                startTimer();
                 switchScreen('game');
             } else {
                 endGame();
             }
         }
         
-        function startTimer() {
-            if (timerInterval) clearInterval(timerInterval);
-
-            agentReplyEl.disabled = false;
-            submitBtn.disabled = false;
-            let timeLeft = 60;
-            
-            timerTextEl.textContent = `1:00`;
-            timerEl.classList.remove('text-red-500', 'bg-red-50');
-            timerEl.classList.add('text-indigo-600', 'bg-indigo-50');
-
-            timerInterval = setInterval(() => {
-                timeLeft--;
-                const seconds = timeLeft % 60;
-                timerTextEl.textContent = `0:${seconds.toString().padStart(2, '0')}`;
-
-                if (timeLeft <= 10 && timeLeft > 0) {
-                    timerEl.classList.add('text-red-500', 'bg-red-50');
-                    timerEl.classList.remove('text-indigo-600', 'bg-indigo-50');
-                }
-
-                if (timeLeft <= 0) {
-                    clearInterval(timerInterval);
-                    timerTextEl.textContent = "0:00";
-                    agentReplyEl.disabled = true;
-                    submitBtn.disabled = true;
-                    setTimeout(() => {
-                        rateReply(true); // Pass flag for auto-submit
-                    }, 500);
-                }
-            }, 1000);
-        }
-
-        function rateReply(isAutoSubmit = false) {
-            clearInterval(timerInterval);
+        function rateReply() {
             const playerName = selectedPlayerName;
             originalReplyText = agentReplyEl.value;
-            if (isAutoSubmit && originalReplyText.trim() === '') {
-                originalReplyText = "(Time ran out)";
-            }
             const reply = originalReplyText.toLowerCase();
 
             if (!playerName) {
                 alert('Please select your name for this round.');
-                startTimer(); // Restart timer if name was missing
                 return;
             }
-             if (reply.length < 10 && !isAutoSubmit) {
+             if (reply.length < 10) {
                 alert('Please provide a more detailed response.');
-                startTimer(); // Restart timer if reply was too short
                 return;
             }
 
@@ -478,20 +434,25 @@
             const keywordSets = {
                 e: ["frustrating", "understand", "imagine", "sorry to hear", "difficult", "annoying", "concern", "apologise"],
                 p: situations[currentSituationIndex].keywords,
-                s: ["solution", "fix", "resolve", "what we can do", "the reason is", "the next step", "you can", "to fix this", "investigate", "look into", "check with", "coordinate", "escalate", "find out what happened", "get to the bottom"],
-                o: ["i will", "i'll", "personally", "myself", "i am", "i'm", "by ", "pm", "am", "today", "within", "hour", "soon as", "asap", "shortly", "immediately"]
+                s: ["the reason is", "this happened because", "you can", "the next step is", "to fix this", "reactivate", "recreate", "upload", "delete"],
+                o: ["i will", "i'll", "personally", "myself", "i am", "i'm", "investigate", "look into", "check with", "coordinate", "escalate", "get back to you", "update you", "by", "pm", "am", "today", "within", "hour", "soon as", "asap", "shortly", "immediately"]
             };
-
+            
             if (keywordSets.e.some(word => reply.includes(word))) { scores.e = 25; feedback.e = { text: "Excellent empathy!", icon: '❤️' };
             } else { feedback.e = { text: "Acknowledge the customer's frustration first.", icon: '💔' }; }
 
             if (keywordSets.p.some(key => reply.includes(key))) { scores.p = 25; feedback.p = { text: "Great personalisation!", icon: '🎯' };
             } else { feedback.p = { text: `Mention a specific keyword from their message (e.g., '${keywordSets.p[0]}').`, icon: '🧐' }; }
+            
+            const ownershipProcessWords = ["investigate", "look into", "check with", "coordinate", "escalate", "get back to you", "update you"];
+            if (keywordSets.s.some(word => reply.includes(word))) { scores.s = 25; feedback.s = { text: "Good! You provided a clear solution or an actionable next step for the customer.", icon: '💡' };
+            } else if (ownershipProcessWords.some(word => reply.includes(word))) {
+                scores.s = 10; // Partial score for explaining a process without a direct solution
+                feedback.s = { text: "You explained the process, which is good. For a full score, try to also give the customer a direct action they can take, or explain *why* something happened.", icon: '🤔' };
+            }
+            else { feedback.s = { text: "Guide the customer to a solution or explain next steps.", icon: '🤔' }; }
 
-            if (keywordSets.s.some(word => reply.includes(word))) { scores.s = 25; feedback.s = { text: "Good! You provided a clear path towards a solution.", icon: '💡' };
-            } else { feedback.s = { text: "Guide the customer to a solution or explain next steps.", icon: '🤔' }; }
-
-            const ownActionWords = ["i will", "i'll", "personally", "myself", "i am", "i'm"];
+            const ownActionWords = ["i will", "i'll", "personally", "myself", "i am", "i'm", ...ownershipProcessWords];
             const timelineWords = ["by", "pm", "am", "today", "within", "hour", "soon as", "asap", "shortly", "immediately"];
             if (ownActionWords.some(word => reply.includes(word))) { scores.o += 15; }
             if (timelineWords.some(word => reply.includes(word))) { scores.o += 10; }
@@ -529,7 +490,8 @@
             let highlightedHtml = originalReplyText;
             highlightedHtml = highlightKeywords(highlightedHtml, keywordSets.e, 'highlight-e');
             highlightedHtml = highlightKeywords(highlightedHtml, keywordSets.p, 'highlight-p');
-            highlightedHtml = highlightKeywords(highlightedHtml, keywordSets.s, 'highlight-s');
+            const allSolutionKeywords = [...keywordSets.s, "investigate", "look into", "check with", "coordinate", "escalate", "get back to you", "update you"];
+            highlightedHtml = highlightKeywords(highlightedHtml, allSolutionKeywords, 'highlight-s');
             highlightedHtml = highlightKeywords(highlightedHtml, keywordSets.o, 'highlight-o');
             highlightedReplyEl.innerHTML = highlightedHtml;
             
@@ -542,8 +504,8 @@
             
             feedbackMap.forEach((item, index) => {
                 const el = document.getElementById(item.id);
-                const scoreColor = item.score > 0 ? 'text-green-600' : 'text-slate-400';
-                const bgColor = item.score > 0 ? 'bg-green-50' : 'bg-white';
+                const scoreColor = item.score >= 25 ? 'text-green-600' : (item.score > 0 ? 'text-amber-600' : 'text-slate-400');
+                const bgColor = item.score >= 25 ? 'bg-green-50' : (item.score > 0 ? 'bg-amber-50' : 'bg-white');
                 el.className = `feedback-card flex items-start p-4 rounded-xl shadow ${bgColor}`;
                 el.innerHTML = `
                     <div class="mr-4 flex-shrink-0 text-2xl">${item.data.icon}</div>
@@ -734,7 +696,7 @@
 
             // --- Event Listeners ---
             startBtn.addEventListener('click', initiateGameStart);
-            submitBtn.addEventListener('click', () => rateReply(false));
+            submitBtn.addEventListener('click', rateReply);
             nextBtn.addEventListener('click', () => {
                 currentSituationIndex++;
                 loadSituation();
