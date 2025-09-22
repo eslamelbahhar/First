@@ -25,7 +25,7 @@
             display: none;
         }
         .screen.active {
-            display: block;
+            display: flex; /* Use flex for centering */
         }
         .highlight-e { background-color: #fef9c3; padding: 1px 3px; border-radius: 4px; font-weight: 500;}
         .highlight-p { background-color: #dbeafe; padding: 1px 3px; border-radius: 4px; font-weight: 500;}
@@ -48,13 +48,14 @@
             font-weight: 500;
             color: #475569; /* slate-600 */
             z-index: 0;
+            transition: transform 1s ease-in, opacity 1s ease-in; /* For exit animation */
         }
 
         @keyframes float {
-            0% { transform: translateY(110vh) translateX(var(--start-x)) rotate(0deg); opacity: 0; }
+            0% { transform: translateY(110vh) rotate(0deg); opacity: 0; }
             10% { opacity: 1; }
             90% { opacity: 1; }
-            100% { transform: translateY(-10vh) translateX(var(--end-x)) rotate(360deg); opacity: 0; }
+            100% { transform: translateY(-10vh) rotate(360deg); opacity: 0; }
         }
         
         /* Custom Dropdown */
@@ -105,28 +106,30 @@
 
     <div id="floating-elements-bg" class="fixed inset-0 z-0 overflow-hidden"></div>
 
-    <div class="relative z-10 w-full max-w-4xl mx-auto my-8 p-4">
+    <div class="relative z-10 w-full max-w-4xl mx-auto my-8 p-4 flex items-center" style="min-height: 80vh;">
         
         <!-- Start Screen -->
-        <div id="start-screen" class="screen active text-center bg-white/80 backdrop-blur-lg p-8 md:p-16 rounded-2xl shadow-xl border border-slate-200">
-            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800">Impactful Customer Conversations</h1>
-            <p class="text-slate-600 mt-4 text-lg">Welcome to the EPSO Challenge!</p>
-            <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-                <button id="start-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
-                    Start Group Challenge
-                </button>
-                <button id="view-all-time-leaderboard-btn" class="bg-white border-2 border-slate-300 text-slate-700 font-bold py-3 px-8 rounded-lg hover:bg-slate-100 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
-                    All-Time Leaderboard
-                </button>
-                <button id="view-data-btn" class="bg-white border-2 border-slate-300 text-slate-700 font-bold py-3 px-8 rounded-lg hover:bg-slate-100 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
-                    View Game Data
-                </button>
+        <div id="start-screen" class="screen active w-full text-center bg-white/80 backdrop-blur-lg p-8 md:p-16 rounded-2xl shadow-xl border border-slate-200 justify-center items-center flex-col">
+            <div class="relative z-10">
+                <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800">Impactful Customer Conversations</h1>
+                <p class="text-slate-600 mt-4 text-lg">Welcome to the EPSO Challenge!</p>
+                <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+                    <button id="start-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
+                        Start Group Challenge
+                    </button>
+                    <button id="view-all-time-leaderboard-btn" class="bg-white border-2 border-slate-300 text-slate-700 font-bold py-3 px-8 rounded-lg hover:bg-slate-100 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
+                        All-Time Leaderboard
+                    </button>
+                    <button id="view-data-btn" class="bg-white border-2 border-slate-300 text-slate-700 font-bold py-3 px-8 rounded-lg hover:bg-slate-100 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
+                        View Game Data
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- Game Screen -->
-        <div id="game-screen" class="screen">
-            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <div id="game-screen" class="screen w-full justify-center items-center">
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 w-full">
                 <!-- Situation Display -->
                 <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg mb-6">
                     <p class="font-semibold text-amber-800">Customer Message (<span id="progress-text"></span>):</p>
@@ -164,7 +167,7 @@
         </div>
 
         <!-- Feedback Screen -->
-        <div id="feedback-screen" class="screen">
+        <div id="feedback-screen" class="screen w-full flex-col">
             <div class="text-center mb-6">
                 <h2 class="text-3xl font-bold text-slate-800">Reply Breakdown for <span id="feedback-player-name" class="text-indigo-600"></span></h2>
                 <p class="text-slate-500">Score for this reply: <span id="reply-score" class="font-bold text-indigo-600"></span></p>
@@ -195,45 +198,49 @@
         </div>
         
         <!-- Leaderboard Screen (End Screen) -->
-        <div id="leaderboard-screen" class="screen bg-white p-8 md:p-12 rounded-2xl shadow-lg">
-            <h2 id="leaderboard-title" class="text-4xl font-extrabold text-slate-800 text-center"></h2>
-            <p id="leaderboard-subtitle" class="text-center text-slate-500 mt-2 mb-8"></p>
-            <div class="space-y-3" id="leaderboard-list">
-                <!-- Leaderboard items will be injected here -->
+        <div id="leaderboard-screen" class="screen w-full justify-center items-center">
+            <div class="bg-white p-8 md:p-12 rounded-2xl shadow-lg w-full">
+                <h2 id="leaderboard-title" class="text-4xl font-extrabold text-slate-800 text-center"></h2>
+                <p id="leaderboard-subtitle" class="text-center text-slate-500 mt-2 mb-8"></p>
+                <div class="space-y-3" id="leaderboard-list">
+                    <!-- Leaderboard items will be injected here -->
+                </div>
+                 <div id="leaderboard-buttons" class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                     <!-- Buttons will be injected here -->
+                 </div>
             </div>
-             <div id="leaderboard-buttons" class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-                 <!-- Buttons will be injected here -->
-             </div>
         </div>
         
         <!-- Data Screen -->
-        <div id="data-screen" class="screen bg-white p-8 md:p-12 rounded-2xl shadow-lg">
-            <h2 class="text-3xl font-extrabold text-slate-800 text-center">Game Data Log</h2>
-            <p class="text-center text-slate-500 mt-2 mb-8">All recorded entries from every session.</p>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-slate-500">
-                    <thead class="text-xs text-slate-700 uppercase bg-slate-100">
-                        <tr>
-                            <th scope="col" class="px-6 py-3">Scenario #</th>
-                            <th scope="col" class="px-6 py-3">Player</th>
-                            <th scope="col" class="px-6 py-3">Reply</th>
-                            <th scope="col" class="px-6 py-3 text-center">E</th>
-                            <th scope="col" class="px-6 py-3 text-center">P</th>
-                            <th scope="col" class="px-6 py-3 text-center">S</th>
-                            <th scope="col" class="px-6 py-3 text-center">O</th>
-                            <th scope="col" class="px-6 py-3 text-center">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody id="data-log-table-body">
-                        <!-- Data rows will be injected here -->
-                    </tbody>
-                </table>
+        <div id="data-screen" class="screen w-full justify-center items-center">
+            <div class="bg-white p-8 md:p-12 rounded-2xl shadow-lg w-full">
+                <h2 class="text-3xl font-extrabold text-slate-800 text-center">Game Data Log</h2>
+                <p class="text-center text-slate-500 mt-2 mb-8">All recorded entries from every session.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm text-left text-slate-500">
+                        <thead class="text-xs text-slate-700 uppercase bg-slate-100">
+                            <tr>
+                                <th scope="col" class="px-6 py-3">Scenario #</th>
+                                <th scope="col" class="px-6 py-3">Player</th>
+                                <th scope="col" class="px-6 py-3">Reply</th>
+                                <th scope="col" class="px-6 py-3 text-center">E</th>
+                                <th scope="col" class="px-6 py-3 text-center">P</th>
+                                <th scope="col" class="px-6 py-3 text-center">S</th>
+                                <th scope="col" class="px-6 py-3 text-center">O</th>
+                                <th scope="col" class="px-6 py-3 text-center">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="data-log-table-body">
+                            <!-- Data rows will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+                 <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
+                     <button id="data-back-to-start-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-transform transform hover:scale-105 w-full sm:w-auto">Back to Start</button>
+                     <button id="copy-csv-btn" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 w-full sm:w-auto">Copy as CSV</button>
+                     <button id="clear-all-data-btn" class="bg-red-100 border-2 border-red-200 text-red-700 font-bold py-3 px-8 rounded-lg hover:bg-red-200 transition-transform transform hover:scale-105 w-full sm:w-auto">Clear All Data</button>
+                 </div>
             </div>
-             <div class="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
-                 <button id="data-back-to-start-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-transform transform hover:scale-105 w-full sm:w-auto">Back to Start</button>
-                 <button id="copy-csv-btn" class="bg-green-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-green-700 transition-transform transform hover:scale-105 w-full sm:w-auto">Copy as CSV</button>
-                 <button id="clear-all-data-btn" class="bg-red-100 border-2 border-red-200 text-red-700 font-bold py-3 px-8 rounded-lg hover:bg-red-200 transition-transform transform hover:scale-105 w-full sm:w-auto">Clear All Data</button>
-             </div>
         </div>
 
     </div>
@@ -294,6 +301,9 @@
         const switchScreen = (screenName) => {
             Object.values(screens).forEach(screen => screen.classList.remove('active'));
             screens[screenName].classList.add('active');
+             if (screenName === 'start') {
+                createFloatingElements(); // Regenerate for next time
+            }
         };
 
         function populateNameDropdown() {
@@ -325,18 +335,30 @@
                 const el = document.createElement('div');
                 el.className = 'floating-element';
                 el.textContent = text;
-                const startX = `${Math.random() * 80 + 10}vw`;
-                const endX = `${Math.random() * 80 + 10}vw`;
-                el.style.setProperty('--start-x', startX);
-                el.style.setProperty('--end-x', endX);
-                el.style.animationDuration = `${15 + Math.random() * 15}s`;
-                el.style.animationDelay = `${Math.random() * 20}s`;
+                el.style.left = `${5 + Math.random() * 90}vw`;
+                el.style.animationDuration = `${20 + Math.random() * 15}s`;
+                el.style.animationDelay = `${Math.random() * 25}s`;
                 el.style.fontSize = `${14 + Math.random() * 8}px`;
+                el.style.transform = '';
+                el.style.opacity = '';
                 container.appendChild(el);
             });
         }
         
         // --- Game Logic ---
+        function initiateGameStart() {
+            const floatingElements = document.querySelectorAll('.floating-element');
+            floatingElements.forEach(el => {
+                const randomX = (Math.random() - 0.5) * 20; // -10 to +10 vw
+                el.style.transform = `translateY(-110vh) translateX(${randomX}vw) rotate(180deg) scale(0.3)`;
+                el.style.opacity = '0';
+            });
+
+            setTimeout(() => {
+                startGame();
+            }, 1000); // Wait 1 second for animation
+        }
+
         function startGame() {
             sessionScores = {};
             currentSituationIndex = 0;
@@ -442,7 +464,7 @@
             feedbackMap.forEach((item, index) => {
                 const el = document.getElementById(item.id);
                 const scoreColor = item.score > 0 ? 'text-green-600' : 'text-slate-400';
-                const bgColor = item.score > 0 ? 'bg-green-50' : 'bg-slate-100';
+                const bgColor = item.score > 0 ? 'bg-green-50' : 'bg-white';
                 el.className = `feedback-card flex items-start p-4 rounded-xl shadow ${bgColor}`;
                 el.innerHTML = `
                     <div class="mr-4 flex-shrink-0 text-2xl">${item.data.icon}</div>
@@ -610,7 +632,7 @@
             createFloatingElements();
 
             // --- Event Listeners ---
-            startBtn.addEventListener('click', startGame);
+            startBtn.addEventListener('click', initiateGameStart);
             submitBtn.addEventListener('click', rateReply);
             nextBtn.addEventListener('click', () => {
                 currentSituationIndex++;
