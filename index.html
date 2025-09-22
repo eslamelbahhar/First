@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The EPSO Challenge</title>
+    <title>The EPSO Challenge (Group Edition)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
@@ -21,14 +21,6 @@
             transform: scale(1) translateY(0);
             opacity: 1;
         }
-        .score-change {
-            animation: score-pop 0.5s ease-out;
-        }
-        @keyframes score-pop {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); color: #4f46e5; }
-            100% { transform: scale(1); }
-        }
         .screen {
             display: none;
         }
@@ -44,29 +36,16 @@
         <!-- Start Screen -->
         <div id="start-screen" class="screen active text-center bg-white p-8 md:p-12 rounded-2xl shadow-lg">
             <h1 class="text-4xl font-extrabold text-slate-800">The EPSO Challenge</h1>
-            <p class="text-slate-500 mt-2">Welcome! Enter your name to begin the training simulation.</p>
-            <form id="start-form" class="mt-8 flex flex-col items-center">
-                <input type="text" id="player-name" class="w-full max-w-sm text-center p-3 border-2 border-slate-300 rounded-lg text-lg focus:ring-4 focus:ring-indigo-200 focus:border-indigo-500 transition" placeholder="Enter your name..." required>
-                <button type="submit" class="mt-4 bg-indigo-600 text-white font-bold py-3 px-10 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
-                    Start Challenge
+            <p class="text-slate-500 mt-2">A group training simulation to master customer communication.</p>
+            <div class="mt-8">
+                <button id="start-btn" class="bg-indigo-600 text-white font-bold py-3 px-10 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                    Start Group Challenge
                 </button>
-            </form>
+            </div>
         </div>
 
         <!-- Game Screen -->
         <div id="game-screen" class="screen">
-            <!-- Header -->
-            <div class="flex justify-between items-center mb-6 p-4 bg-white rounded-xl shadow-md">
-                <div>
-                    <p class="text-sm text-slate-500">Player</p>
-                    <p id="display-player-name" class="font-bold text-slate-800 text-lg"></p>
-                </div>
-                <div>
-                    <p class="text-sm text-slate-500 text-right">Total Score</p>
-                    <p id="display-total-score" class="font-bold text-indigo-600 text-lg text-right">0</p>
-                </div>
-            </div>
-            
             <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
                 <!-- Situation Display -->
                 <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg mb-6">
@@ -75,9 +54,15 @@
                 </div>
 
                 <!-- Agent Input -->
-                <div>
-                    <label for="agent-reply" class="block text-sm font-medium text-slate-700 mb-2">Your Reply:</label>
-                    <textarea id="agent-reply" rows="6" class="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Type your best EPSO response here..."></textarea>
+                <div class="space-y-4">
+                    <div>
+                        <label for="round-player-name" class="block text-sm font-medium text-slate-700 mb-1">Your Name for this Round:</label>
+                        <input type="text" id="round-player-name" class="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Enter your name...">
+                    </div>
+                    <div>
+                        <label for="agent-reply" class="block text-sm font-medium text-slate-700 mb-1">Your Reply:</label>
+                        <textarea id="agent-reply" rows="5" class="w-full p-3 border border-slate-300 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" placeholder="Type your best EPSO response here..."></textarea>
+                    </div>
                 </div>
 
                 <div class="mt-6 flex justify-center">
@@ -91,7 +76,7 @@
         <!-- Feedback Screen -->
         <div id="feedback-screen" class="screen">
             <div class="text-center mb-6">
-                <h2 class="text-3xl font-bold text-slate-800">Your EPSO Breakdown</h2>
+                <h2 class="text-3xl font-bold text-slate-800">Reply Breakdown for <span id="feedback-player-name" class="text-indigo-600"></span></h2>
                 <p class="text-slate-500">Score for this reply: <span id="reply-score" class="font-bold text-indigo-600"></span></p>
             </div>
             <div class="space-y-4">
@@ -107,31 +92,16 @@
             </div>
         </div>
         
-        <!-- End Screen -->
-        <div id="end-screen" class="screen text-center bg-white p-8 md:p-12 rounded-2xl shadow-lg">
-             <h2 class="text-4xl font-extrabold text-slate-800">Challenge Complete!</h2>
-             <p class="text-slate-500 mt-2">Well done, <span id="final-player-name" class="font-bold"></span>!</p>
-             <p class="mt-6 text-lg text-slate-600">Your Final Score:</p>
-             <p class="text-6xl font-bold text-indigo-600 my-2" id="final-score"></p>
-             <div class="mt-8 flex justify-center space-x-4">
-                <button id="leaderboard-btn" class="bg-white border-2 border-slate-300 text-slate-700 font-bold py-3 px-8 rounded-lg hover:bg-slate-100 transition-transform transform hover:scale-105">
-                    View Leaderboard
-                </button>
-                <button id="restart-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">
-                    Practice Again
-                </button>
-             </div>
-        </div>
-
-        <!-- Leaderboard Screen -->
+        <!-- Leaderboard Screen (End Screen) -->
         <div id="leaderboard-screen" class="screen bg-white p-8 md:p-12 rounded-2xl shadow-lg">
-            <h2 class="text-3xl font-extrabold text-slate-800 text-center mb-6">Leaderboard</h2>
+            <h2 class="text-4xl font-extrabold text-slate-800 text-center">Challenge Complete!</h2>
+            <p class="text-center text-slate-500 mt-2 mb-8">Here are the final scores.</p>
             <div class="space-y-3" id="leaderboard-list">
                 <!-- Leaderboard items will be injected here -->
             </div>
              <div class="mt-8 flex justify-center">
-                 <button id="back-to-start-btn" class="bg-slate-200 text-slate-800 font-bold py-3 px-8 rounded-lg hover:bg-slate-300 transition-transform transform hover:scale-105">
-                    Back to Start
+                 <button id="restart-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-transform transform hover:scale-105">
+                    Play Again
                 </button>
              </div>
         </div>
@@ -144,34 +114,34 @@
             start: document.getElementById('start-screen'),
             game: document.getElementById('game-screen'),
             feedback: document.getElementById('feedback-screen'),
-            end: document.getElementById('end-screen'),
             leaderboard: document.getElementById('leaderboard-screen'),
         };
 
-        const startForm = document.getElementById('start-form');
-        const playerNameInput = document.getElementById('player-name');
+        const startBtn = document.getElementById('start-btn');
         const situationTextEl = document.getElementById('situation-text');
+        const roundPlayerNameInput = document.getElementById('round-player-name');
         const agentReplyEl = document.getElementById('agent-reply');
         const submitBtn = document.getElementById('submit-btn');
         const nextBtn = document.getElementById('next-btn');
         const restartBtn = document.getElementById('restart-btn');
-        const leaderboardBtn = document.getElementById('leaderboard-btn');
-        const backToStartBtn = document.getElementById('back-to-start-btn');
         
         // Game State
-        let currentPlayer = '';
-        let totalScore = 0;
+        let sessionScores = {};
         let currentSituationIndex = 0;
         
         const situations = [
-            { text: "I’ve been waiting for three days and nobody has fixed my issue! This is the worst service ever.", keywords: ["three days", "3 days", "waiting", "fixed"] },
-            { text: "Why do you people keep ignoring my messages? Do I need to call your CEO to get this resolved?", keywords: ["messages", "ignoring", "ceo", "resolved"] },
-            { text: "Every time I renew my package, something goes wrong. I’m sick of this!", keywords: ["renew", "package", "every time", "wrong"] },
-            { text: "Check the chat or ask your friends because I have been explaining again in every chat.", keywords: ["chat", "explaining", "again", "friends"] },
-            { text: "My payment was deducted, but I can’t see the listing on my account.", keywords: ["payment", "deducted", "listing", "account"] },
-            { text: "I specifically wanted my ad under Villas in Abu Dhabi, but now you tell me I have to recreate it under Apartments.", keywords: ["villas", "abu dhabi", "apartments", "recreate"] },
-            { text: "I did not know that pet selling is not permitted.", keywords: ["pet", "selling", "permitted", "know"] },
-            { text: "I got scammed on WhatsApp, you are a bad platform and not safe!", keywords: ["scammed", "whatsapp", "safe", "platform"] }
+            { text: "I've been waiting for three days, and nobody has fixed my issue! This is the worst service ever.", keywords: ["three days", "3 days", "waiting", "fixed", "issue"] },
+            { text: "Why do you people keep ignoring my messages? Do I need to call your CEO to get this resolved?", keywords: ["ignoring", "messages", "ceo", "resolved"] },
+            { text: "Every time I renew my package, something goes wrong. I'm sick of this!", keywords: ["renew", "package", "every time", "wrong"] },
+            { text: "Check the chat because I have been explaining again in every chat.", keywords: ["chat", "explaining", "again", "every"] },
+            { text: "My payment was deducted, but I can't see the listing on my account.", keywords: ["payment", "deducted", "listing", "account"] },
+            { text: "I specifically requested my ad to appear under Villas in Abu Dhabi, but it's showing under Apartments.", keywords: ["villas", "abu dhabi", "apartments", "showing"] },
+            { text: "Hello, can you delete and unlink my number from this account. Thank you.", keywords: ["delete", "unlink", "number", "account"] },
+            { text: "I posted it before, and it was live and not rejected. How come?", keywords: ["before", "live", "rejected", "how come"] },
+            { text: "There was an advertisement that failed to be published. I need a refund.", keywords: ["advertisement", "failed", "published", "refund"] },
+            { text: "My post was rejected due to duplication. However, I couldn't see my expired post to reactivate it. Please fix it or give me the option to advertise a new post.", keywords: ["rejected", "duplication", "expired", "reactivate", "new post"] },
+            { text: "I'm trying to list an ad, but I cannot make a payment. I've tried to pay from 2 different banks, but the same error is showing.", keywords: ["payment", "pay", "banks", "error"] },
+            { text: "I want to update my email address, but your colleague tells me I'm not allowed.", keywords: ["update", "email", "colleague", "not allowed"] }
         ];
 
         // --- Utility Functions ---
@@ -179,29 +149,19 @@
             Object.values(screens).forEach(screen => screen.classList.remove('active'));
             screens[screenName].classList.add('active');
         };
-
-        const updateScoreDisplay = () => {
-            const scoreEl = document.getElementById('display-total-score');
-            scoreEl.textContent = totalScore;
-            scoreEl.classList.add('score-change');
-            setTimeout(() => scoreEl.classList.remove('score-change'), 500);
-        };
         
         // --- Game Logic ---
         function startGame() {
-            currentPlayer = playerNameInput.value.trim() || 'Agent';
-            totalScore = 0;
+            sessionScores = {};
             currentSituationIndex = 0;
-            document.getElementById('display-player-name').textContent = currentPlayer;
-            updateScoreDisplay();
             loadSituation();
-            switchScreen('game');
         }
 
         function loadSituation() {
             if (currentSituationIndex < situations.length) {
                 situationTextEl.textContent = situations[currentSituationIndex].text;
                 agentReplyEl.value = '';
+                roundPlayerNameInput.value = ''; // Clear name for next player
                 document.getElementById('progress-text').textContent = `Scenario ${currentSituationIndex + 1} of ${situations.length}`;
                 switchScreen('game');
             } else {
@@ -210,7 +170,18 @@
         }
         
         function rateReply() {
+            const playerName = roundPlayerNameInput.value.trim();
             const reply = agentReplyEl.value.toLowerCase();
+
+            if (!playerName) {
+                alert('Please enter your name for this round.');
+                return;
+            }
+             if (reply.length < 10) {
+                alert('Please provide a more detailed response.');
+                return;
+            }
+
             let scores = { e: 0, p: 0, s: 0, o: 0 };
             let feedback = {};
             
@@ -259,12 +230,14 @@
             }
             
             const replyScore = scores.e + scores.p + scores.s + scores.o;
-            totalScore += replyScore;
+            sessionScores[playerName] = (sessionScores[playerName] || 0) + replyScore;
             
-            displayFeedback(scores, feedback, replyScore);
+            displayFeedback(playerName, scores, feedback, replyScore);
         }
 
-        function displayFeedback(scores, feedback, replyScore) {
+        function displayFeedback(playerName, scores, feedback, replyScore) {
+            document.getElementById('feedback-player-name').textContent = playerName;
+            
             const feedbackMap = [
                 { id: 'e-feedback', score: scores.e, data: feedback.e, letter: 'E - Empathise' },
                 { id: 'p-feedback', score: scores.p, data: feedback.p, letter: 'P - Personalise' },
@@ -293,51 +266,38 @@
             });
             
             document.getElementById('reply-score').textContent = `${replyScore} / 100`;
-            updateScoreDisplay();
             switchScreen('feedback');
         }
 
         function endGame() {
-            document.getElementById('final-player-name').textContent = currentPlayer;
-            document.getElementById('final-score').textContent = totalScore;
-            saveToLeaderboard(currentPlayer, totalScore);
-            switchScreen('end');
+            displayLeaderboard();
         }
 
         // --- Leaderboard Logic ---
-        function getLeaderboard() {
-            const board = localStorage.getItem('epsoLeaderboard');
-            return board ? JSON.parse(board) : [];
-        }
-
-        function saveToLeaderboard(name, score) {
-            const board = getLeaderboard();
-            board.push({ name, score });
-            board.sort((a, b) => b.score - a.score);
-            localStorage.setItem('epsoLeaderboard', JSON.stringify(board.slice(0, 10))); // Keep top 10
-        }
-
         function displayLeaderboard() {
-            const board = getLeaderboard();
+            const boardArray = Object.entries(sessionScores).map(([name, score]) => ({ name, score }));
+            boardArray.sort((a, b) => b.score - a.score);
+
             const listEl = document.getElementById('leaderboard-list');
             listEl.innerHTML = '';
 
-            if (board.length === 0) {
-                listEl.innerHTML = '<p class="text-center text-slate-500">No scores yet. Be the first!</p>';
+            if (boardArray.length === 0) {
+                listEl.innerHTML = '<p class="text-center text-slate-500">No scores recorded in this session.</p>';
+                switchScreen('leaderboard');
                 return;
             }
 
-            board.forEach((entry, index) => {
+            boardArray.forEach((entry, index) => {
                 const rankIcons = ['🥇', '🥈', '🥉'];
-                const icon = index < 3 ? `<span class="text-2xl">${rankIcons[index]}</span>` : `<span class="font-bold text-slate-500">${index + 1}</span>`;
+                const icon = index < 3 ? `<span class="text-2xl">${rankIcons[index]}</span>` : `<span class="font-bold text-slate-500 text-lg w-6 text-center">${index + 1}</span>`;
                 const el = document.createElement('div');
                 el.className = 'flex items-center justify-between p-4 rounded-lg bg-slate-100';
                 el.innerHTML = `
                     <div class="flex items-center space-x-4">
                         ${icon}
-                        <p class="font-bold text-slate-700">${entry.name}</p>
+                        <p class="font-bold text-slate-700 text-lg">${entry.name}</p>
                     </div>
-                    <p class="font-bold text-indigo-600">${entry.score} pts</p>
+                    <p class="font-bold text-indigo-600 text-lg">${entry.score} pts</p>
                 `;
                 listEl.appendChild(el);
             });
@@ -345,10 +305,7 @@
         }
 
         // --- Event Listeners ---
-        startForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            startGame();
-        });
+        startBtn.addEventListener('click', startGame);
 
         submitBtn.addEventListener('click', rateReply);
         
@@ -357,11 +314,7 @@
             loadSituation();
         });
         
-        restartBtn.addEventListener('click', startGame);
-        
-        leaderboardBtn.addEventListener('click', displayLeaderboard);
-        
-        backToStartBtn.addEventListener('click', () => switchScreen('start'));
+        restartBtn.addEventListener('click', () => switchScreen('start'));
 
     </script>
 </body>
