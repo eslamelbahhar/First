@@ -79,8 +79,8 @@
             border: 1px solid #e2e8f0;
             border-radius: 0.75rem;
             margin-top: 8px;
-            max-height: 160px; /* Smaller dropdown height */
-            width: 280px; /* Smaller dropdown width */
+            max-height: 240px; /* Longer dropdown height */
+            width: 320px; /* Wider dropdown width */
             overflow-y: auto;
             z-index: 50;
             opacity: 0;
@@ -147,9 +147,17 @@
         <!-- Game Screen -->
         <div id="game-screen" class="screen w-full justify-center items-center">
             <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 w-full">
+                <!-- Header -->
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <h2 class="text-xl font-bold text-slate-800">Scenario <span id="scenario-number">1</span>/<span id="total-scenarios">12</span></h2>
+                    <div id="timer" class="text-xl font-bold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-lg transition-colors">
+                        <span id="timer-text">1:00</span>
+                    </div>
+                </div>
+
                 <!-- Situation Display -->
                 <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-lg mb-6">
-                    <p class="font-semibold text-amber-800">Customer Message (<span id="progress-text"></span>):</p>
+                    <p class="font-semibold text-amber-800">Customer Message:</p>
                     <p id="situation-text" class="text-amber-900 mt-1 font-medium"></p>
                 </div>
 
@@ -176,7 +184,7 @@
                 </div>
 
                 <div class="mt-6 flex justify-center">
-                    <button id="submit-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105">
+                    <button id="submit-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105 disabled:bg-slate-400 disabled:cursor-not-allowed">
                         Rate My Reply
                     </button>
                 </div>
@@ -291,11 +299,15 @@
         const submitBtn = document.getElementById('submit-btn');
         const nextBtn = document.getElementById('next-btn');
         const highlightedReplyEl = document.getElementById('highlighted-reply');
+
+        const timerEl = document.getElementById('timer');
+        const timerTextEl = document.getElementById('timer-text');
         
         // Game State
         let sessionScores = {};
         let currentSituationIndex = 0;
         let originalReplyText = '';
+        let timerInterval;
         
         const participants = [
             "Osama Khalid", "Erfan Abuhassan", "Ahmed Youssef", "Kim Del Mundo", "Cristelle Anne Ventucillo",
@@ -311,7 +323,7 @@
             { text: "My payment was deducted, but I can't see the listing on my account.", keywords: ["payment", "deducted", "listing", "account"] },
             { text: "I specifically requested my ad to appear under Villas in Abu Dhabi, but it's showing under Apartments.", keywords: ["villas", "abu dhabi", "apartments", "showing"] },
             { text: "Hello, can you delete and unlink my number from this account. Thank you.", keywords: ["delete", "unlink", "number", "account"] },
-            { text: "I posted it before, and it was live and not rejected. How come?", keywords: ["before", "live", "rejected", "how come"] },
+            { text: "I posted it before, and it was published and not rejected. How come?", keywords: ["before", "published", "rejected", "how come"] },
             { text: "There was an advertisement that failed to be published. I need a refund.", keywords: ["advertisement", "failed", "published", "refund"] },
             { text: "My post was rejected due to duplication. However, I couldn't see my expired post to reactivate it. Please fix it or give me the option to advertise a new post.", keywords: ["rejected", "duplication", "expired", "reactivate", "new post"] },
             { text: "I'm trying to list an ad, but I cannot make a payment. I've tried to pay from 2 different banks, but the same error is showing.", keywords: ["payment", "pay", "banks", "error"] },
@@ -398,24 +410,65 @@
                 selectedPlayerName = '';
                 selectedNameText.textContent = 'Select Your Name...';
                 selectedNameText.classList.add('text-slate-500');
-                document.getElementById('progress-text').textContent = `Scenario ${currentSituationIndex + 1} of ${situations.length}`;
+                document.getElementById('scenario-number').textContent = currentSituationIndex + 1;
+                document.getElementById('total-scenarios').textContent = situations.length;
+                startTimer();
                 switchScreen('game');
             } else {
                 endGame();
             }
         }
         
-        function rateReply() {
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+
+            agentReplyEl.disabled = false;
+            submitBtn.disabled = false;
+            let timeLeft = 60;
+            
+            timerTextEl.textContent = `1:00`;
+            timerEl.classList.remove('text-red-500', 'bg-red-50');
+            timerEl.classList.add('text-indigo-600', 'bg-indigo-50');
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                const seconds = timeLeft % 60;
+                timerTextEl.textContent = `0:${seconds.toString().padStart(2, '0')}`;
+
+                if (timeLeft <= 10 && timeLeft > 0) {
+                    timerEl.classList.add('text-red-500', 'bg-red-50');
+                    timerEl.classList.remove('text-indigo-600', 'bg-indigo-50');
+                }
+
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerTextEl.textContent = "0:00";
+                    agentReplyEl.disabled = true;
+                    submitBtn.disabled = true;
+                    setTimeout(() => {
+                        rateReply(true); // Pass flag for auto-submit
+                    }, 500);
+                }
+            }, 1000);
+        }
+
+        function rateReply(isAutoSubmit = false) {
+            clearInterval(timerInterval);
             const playerName = selectedPlayerName;
             originalReplyText = agentReplyEl.value;
+            if (isAutoSubmit && originalReplyText.trim() === '') {
+                originalReplyText = "(Time ran out)";
+            }
             const reply = originalReplyText.toLowerCase();
 
             if (!playerName) {
                 alert('Please select your name for this round.');
+                startTimer(); // Restart timer if name was missing
                 return;
             }
-             if (reply.length < 10) {
+             if (reply.length < 10 && !isAutoSubmit) {
                 alert('Please provide a more detailed response.');
+                startTimer(); // Restart timer if reply was too short
                 return;
             }
 
@@ -681,7 +734,7 @@
 
             // --- Event Listeners ---
             startBtn.addEventListener('click', initiateGameStart);
-            submitBtn.addEventListener('click', rateReply);
+            submitBtn.addEventListener('click', () => rateReply(false));
             nextBtn.addEventListener('click', () => {
                 currentSituationIndex++;
                 loadSituation();
