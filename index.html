@@ -437,7 +437,7 @@
             submitBtn.textContent = 'Grading...';
             
             const apiKey = "";
-            const apiUrl = `https://generativelaunguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
 
             const payload = {
                 contents: [{
@@ -475,10 +475,16 @@
                 });
 
                 if (!response.ok) {
+                    const errorBody = await response.text();
+                    console.error("API Error Response:", errorBody);
                     throw new Error(`API Error: ${response.status}`);
                 }
 
                 const result = await response.json();
+                if (!result.candidates || !result.candidates[0].content.parts[0].text) {
+                    console.error("Invalid AI Response:", result);
+                    throw new Error("Invalid AI response structure.");
+                }
                 const jsonText = result.candidates[0].content.parts[0].text;
                 return JSON.parse(jsonText);
 
@@ -539,9 +545,8 @@
             displayFeedback(playerName, scores, feedback, replyScore);
         }
 
-        function highlightKeywords(text, keywords, className) {
+        function highlightKeywords(text) {
             let highlightedText = text;
-            const sortedKeywords = keywords.sort((a, b) => b.length - a.length);
             const keywordSets = {
                 e: ["frustrating", "understand", "imagine", "sorry to hear", "difficult", "annoying", "concern", "apologise"],
                 p: situations[currentSituationIndex].keywords,
@@ -549,10 +554,19 @@
                 o: ["i will", "i'll", "personally", "myself", "i am", "i'm", "by", "pm", "am", "today", "within", "hour", "soon as", "asap", "shortly", "immediately", "get back to you", "update you"]
             };
             
-            highlightedText = highlightKeywords(highlightedText, keywordSets.e, 'highlight-e');
-            highlightedText = highlightKeywords(highlightedText, keywordSets.p, 'highlight-p');
-            highlightedText = highlightKeywords(highlightedText, keywordSets.s, 'highlight-s');
-            highlightedText = highlightKeywords(highlightedText, keywordSets.o, 'highlight-o');
+            function applyHighlights(text, keywords, className) {
+                const sortedKeywords = keywords.sort((a, b) => b.length - a.length);
+                sortedKeywords.forEach(keyword => {
+                    const regex = new RegExp(`(\\b${keyword}[a-z]*\\b)`, 'gi');
+                    text = text.replace(regex, `<span class="${className}">$1</span>`);
+                });
+                return text;
+            }
+
+            highlightedText = applyHighlights(highlightedText, keywordSets.e, 'highlight-e');
+            highlightedText = applyHighlights(highlightedText, keywordSets.p, 'highlight-p');
+            highlightedText = applyHighlights(highlightedText, keywordSets.s, 'highlight-s');
+            highlightedText = applyHighlights(highlightedText, keywordSets.o, 'highlight-o');
 
             return highlightedText;
         }
