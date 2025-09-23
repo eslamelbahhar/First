@@ -129,7 +129,7 @@
         <div id="start-screen" class="screen active w-full text-center bg-white/80 backdrop-blur-lg p-8 md:p-16 rounded-2xl shadow-xl border border-slate-200 justify-center items-center flex-col">
             <div class="relative z-10">
                 <h1 class="text-4xl md:text-5xl font-extrabold text-slate-800">Impactful Customer Conversations</h1>
-                <p class="text-slate-600 mt-4 text-lg">Welcome to the EPSO Challenge!</p>
+                <p class="text-slate-600 mt-4 text-lg">Welcome to the AI-Powered EPSO Challenge!</p>
                 <div class="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
                     <button id="start-btn" class="bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-transform transform hover:scale-105 text-lg w-full sm:w-auto">
                         Start Group Challenge
@@ -191,12 +191,12 @@
         <!-- Feedback Screen -->
         <div id="feedback-screen" class="screen w-full flex-col">
             <div class="text-center mb-6">
-                <h2 class="text-3xl font-bold text-slate-800">Reply Breakdown for <span id="feedback-player-name" class="text-indigo-600"></span></h2>
+                <h2 class="text-3xl font-bold text-slate-800">AI Breakdown for <span id="feedback-player-name" class="text-indigo-600"></span></h2>
                 <p class="text-slate-500">Score for this reply: <span id="reply-score" class="font-bold text-indigo-600"></span></p>
             </div>
             
             <div class="bg-slate-100 p-4 rounded-lg border border-slate-200 mb-6">
-                <p class="text-sm font-semibold text-slate-600 mb-2">Your Reply with EPSO Highlights:</p>
+                <p class="text-sm font-semibold text-slate-600 mb-2">Your Reply with Keyword Highlights:</p>
                 <div id="highlighted-reply" class="text-slate-800 whitespace-pre-wrap leading-relaxed"></div>
                 <div class="flex flex-wrap gap-x-4 gap-y-2 mt-3 text-xs">
                     <span class="flex items-center"><span class="w-3 h-3 rounded-full bg-yellow-200 mr-1.5 border border-yellow-300"></span>Empathy</span>
@@ -365,7 +365,7 @@
                 el.className = 'floating-element';
                 el.textContent = text;
                 el.style.left = `${5 + Math.random() * 90}vw`;
-                el.style.animationDuration = `${12 + Math.random() * 8}s`; // Faster speed
+                el.style.animationDuration = `${12 + Math.random() * 8}s`;
                 el.style.animationDelay = `${Math.random() * 15}s`;
                 el.style.fontSize = `${14 + Math.random() * 8}px`;
                 container.appendChild(el);
@@ -413,54 +413,118 @@
                 endGame();
             }
         }
+
+        const AI_GRADING_RUBRIC = `
+            You are a fair but firm Quality Assurance expert for a customer support team. Your task is to grade an agent's reply to a customer's message based on the EPSO framework.
+
+            THE EPSO FRAMEWORK:
+            - E (Empathise): Acknowledge the customer's emotion (frustration, confusion, etc.).
+            - P (Personalise): Mention a specific detail from the customer's message to show you've read it.
+            - S (Solution): Provide a clear next step, explain the 'why' behind a policy, or offer a path to resolution. It's not just about solving it now, but explaining the path.
+            - O (Own): Take personal responsibility ("I will", "I am") and ideally provide a specific timeline for follow-up.
+
+            SCORING RULES:
+            - Each category is worth 25 points.
+            - Be nuanced. Give partial credit. For example, if an agent offers to investigate but doesn't explain the 'why' or provide a customer-facing action, that's a partial 'S' score. If an agent says "I will help" but gives no timeline, that's a partial 'O' score.
+            - "ASAP" is a weak timeline. Give it only 5/10 points for the timeline portion of Ownership. A specific time like "by 5 PM" gets full points.
+            - Base your entire analysis ONLY on the provided rubric and texts.
+
+            Return ONLY a JSON object in the specified format. Do not include any other text, greetings, or markdown formatting.
+        `;
+
+        async function getAIScore(scenario, reply) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Grading...';
+            
+            const apiKey = "";
+            const apiUrl = `https://generativelaunguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{
+                    parts: [{
+                        text: `Customer Message: "${scenario}"\n\nAgent Reply: "${reply}"`
+                    }]
+                }],
+                systemInstruction: {
+                    parts: [{ text: AI_GRADING_RUBRIC }]
+                },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "OBJECT",
+                        properties: {
+                            "e_score": { "type": "NUMBER" },
+                            "e_feedback": { "type": "STRING" },
+                            "p_score": { "type": "NUMBER" },
+                            "p_feedback": { "type": "STRING" },
+                            "s_score": { "type": "NUMBER" },
+                            "s_feedback": { "type": "STRING" },
+                            "o_score": { "type": "NUMBER" },
+                            "o_feedback": { "type": "STRING" },
+                        },
+                        required: ["e_score", "e_feedback", "p_score", "p_feedback", "s_score", "s_feedback", "o_score", "o_feedback"]
+                    }
+                }
+            };
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                const jsonText = result.candidates[0].content.parts[0].text;
+                return JSON.parse(jsonText);
+
+            } catch (error) {
+                console.error("AI Grading Error:", error);
+                return null; // Return null on error
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Rate My Reply';
+            }
+        }
         
-        function rateReply() {
+        async function rateReply() {
             const playerName = selectedPlayerName;
             originalReplyText = agentReplyEl.value;
-            const reply = originalReplyText.toLowerCase();
-
+            
             if (!playerName) {
                 alert('Please select your name for this round.');
                 return;
             }
-             if (reply.length < 10) {
+             if (originalReplyText.length < 10) {
                 alert('Please provide a more detailed response.');
                 return;
             }
 
-            let scores = { e: 0, p: 0, s: 0, o: 0 };
-            let feedback = {};
-            
-            const keywordSets = {
-                e: ["frustrating", "understand", "imagine", "sorry to hear", "difficult", "annoying", "concern", "apologise"],
-                p: situations[currentSituationIndex].keywords,
-                s: ["the reason is", "this happened because", "you can", "the next step is", "to fix this", "reactivate", "recreate", "upload", "delete"],
-                o: ["i will", "i'll", "personally", "myself", "i am", "i'm", "investigate", "look into", "check with", "coordinate", "escalate", "get back to you", "update you", "by", "pm", "am", "today", "within", "hour", "soon as", "asap", "shortly", "immediately"]
-            };
-            
-            if (keywordSets.e.some(word => reply.includes(word))) { scores.e = 25; feedback.e = { text: "Excellent empathy!", icon: '❤️' };
-            } else { feedback.e = { text: "Acknowledge the customer's frustration first.", icon: '💔' }; }
+            const aiResult = await getAIScore(situations[currentSituationIndex].text, originalReplyText);
 
-            if (keywordSets.p.some(key => reply.includes(key))) { scores.p = 25; feedback.p = { text: "Great personalisation!", icon: '🎯' };
-            } else { feedback.p = { text: `Mention a specific keyword from their message (e.g., '${keywordSets.p[0]}').`, icon: '🧐' }; }
-            
-            const ownershipProcessWords = ["investigate", "look into", "check with", "coordinate", "escalate", "get back to you", "update you"];
-            if (keywordSets.s.some(word => reply.includes(word))) { scores.s = 25; feedback.s = { text: "Good! You provided a clear solution or an actionable next step for the customer.", icon: '💡' };
-            } else if (ownershipProcessWords.some(word => reply.includes(word))) {
-                scores.s = 10; // Partial score for explaining a process without a direct solution
-                feedback.s = { text: "You explained the process, which is good. For a full score, try to also give the customer a direct action they can take, or explain *why* something happened.", icon: '🤔' };
+            if (!aiResult) {
+                alert("Sorry, there was an error grading the reply. Please try again.");
+                return;
             }
-            else { feedback.s = { text: "Guide the customer to a solution or explain next steps.", icon: '🤔' }; }
 
-            const ownActionWords = ["i will", "i'll", "personally", "myself", "i am", "i'm", ...ownershipProcessWords];
-            const timelineWords = ["by", "pm", "am", "today", "within", "hour", "soon as", "asap", "shortly", "immediately"];
-            if (ownActionWords.some(word => reply.includes(word))) { scores.o += 15; }
-            if (timelineWords.some(word => reply.includes(word))) { scores.o += 10; }
-            
-            if (scores.o >= 25) { feedback.o = { text: "Fantastic ownership! You took personal responsibility and committed to a follow-up.", icon: '🤝' };
-            } else if (scores.o >= 15) { feedback.o = { text: "Good ownership, but try adding a specific timeline.", icon: '👍' };
-            } else { feedback.o = { text: "End with a strong statement of ownership (e.g., 'I will personally...').", icon: '👎' }; }
-            
+            const scores = {
+                e: aiResult.e_score || 0,
+                p: aiResult.p_score || 0,
+                s: aiResult.s_score || 0,
+                o: aiResult.o_score || 0
+            };
+
+            const feedback = {
+                e: { text: aiResult.e_feedback, icon: scores.e >= 25 ? '❤️' : (scores.e > 0 ? '👍' : '💔') },
+                p: { text: aiResult.p_feedback, icon: scores.p >= 25 ? '🎯' : (scores.p > 0 ? '👍' : '🧐') },
+                s: { text: aiResult.s_feedback, icon: scores.s >= 25 ? '💡' : (scores.s > 0 ? '👍' : '🤔') },
+                o: { text: aiResult.o_feedback, icon: scores.o >= 25 ? '🤝' : (scores.o > 0 ? '👍' : '👎') }
+            };
+
             const replyScore = scores.e + scores.p + scores.s + scores.o;
             sessionScores[playerName] = (sessionScores[playerName] || 0) + replyScore;
             
@@ -472,28 +536,31 @@
                 totalScore: replyScore,
             });
 
-            displayFeedback(playerName, scores, feedback, replyScore, keywordSets);
+            displayFeedback(playerName, scores, feedback, replyScore);
         }
 
         function highlightKeywords(text, keywords, className) {
             let highlightedText = text;
             const sortedKeywords = keywords.sort((a, b) => b.length - a.length);
-            sortedKeywords.forEach(keyword => {
-                const regex = new RegExp(`(\\b${keyword}[a-z]*\\b)`, 'gi');
-                highlightedText = highlightedText.replace(regex, `<span class="${className}">$1</span>`);
-            });
+            const keywordSets = {
+                e: ["frustrating", "understand", "imagine", "sorry to hear", "difficult", "annoying", "concern", "apologise"],
+                p: situations[currentSituationIndex].keywords,
+                s: ["the reason is", "this happened because", "you can", "the next step is", "to fix this", "reactivate", "recreate", "upload", "delete", "investigate", "look into", "check with", "coordinate", "escalate", "find out what happened", "get to the bottom"],
+                o: ["i will", "i'll", "personally", "myself", "i am", "i'm", "by", "pm", "am", "today", "within", "hour", "soon as", "asap", "shortly", "immediately", "get back to you", "update you"]
+            };
+            
+            highlightedText = highlightKeywords(highlightedText, keywordSets.e, 'highlight-e');
+            highlightedText = highlightKeywords(highlightedText, keywordSets.p, 'highlight-p');
+            highlightedText = highlightKeywords(highlightedText, keywordSets.s, 'highlight-s');
+            highlightedText = highlightKeywords(highlightedText, keywordSets.o, 'highlight-o');
+
             return highlightedText;
         }
 
-        function displayFeedback(playerName, scores, feedback, replyScore, keywordSets) {
+        function displayFeedback(playerName, scores, feedback, replyScore) {
             document.getElementById('feedback-player-name').textContent = playerName;
-            let highlightedHtml = originalReplyText;
-            highlightedHtml = highlightKeywords(highlightedHtml, keywordSets.e, 'highlight-e');
-            highlightedHtml = highlightKeywords(highlightedHtml, keywordSets.p, 'highlight-p');
-            const allSolutionKeywords = [...keywordSets.s, "investigate", "look into", "check with", "coordinate", "escalate", "get back to you", "update you"];
-            highlightedHtml = highlightKeywords(highlightedHtml, allSolutionKeywords, 'highlight-s');
-            highlightedHtml = highlightKeywords(highlightedHtml, keywordSets.o, 'highlight-o');
-            highlightedReplyEl.innerHTML = highlightedHtml;
+            
+            highlightedReplyEl.innerHTML = highlightKeywords(originalReplyText);
             
             const feedbackMap = [
                 { id: 'e-feedback', score: scores.e, data: feedback.e, letter: 'E - Empathise' },
